@@ -1,0 +1,14 @@
+MIS FINANZAS PARA IPHONE (app web instalable)
+
+Para instalarla hay que subir esta carpeta a una web gratuita. Con GitHub Pages:
+1. Crea un repositorio público en github.com (por ejemplo "mis-finanzas").
+2. "Add file > Upload files" y sube TODOS los archivos de esta carpeta.
+3. Settings > Pages > Branch: main / (root) > Save.
+4. En un minuto tendrás la URL: https://TU-USUARIO.github.io/mis-finanzas/
+
+En el iPhone:
+1. Abre esa URL en Safari.
+2. Botón Compartir > "Añadir a pantalla de inicio".
+3. Ábrela siempre desde el icono. Funciona sin conexión.
+
+Los datos se guardan en el propio iPhone. Usa "Exportar" de vez en cuando para tener una copia.

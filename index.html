@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
+<meta name="theme-color" content="#ffe3dc">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Mis Finanzas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&display=swap">
+<style>
+/* VOICE: calm personal money tool, plain Spanish, the answer first.
+   IDEA: a pocket ledger whose first page states what is left to spend.
+   PICTURE: the big "para caprichos" figure with its spend bar, filling the first screen.
+   COLOUR and TYPE: pale pink ground, ink, teal hero, claret accent; Libre Franklin 800 + 400.
+   LAYOUT: one phone column, tab bar at the bottom, sheets slide up for forms. */
+:root{color-scheme:light dark;--bg:light-dark(#ffe3dc,#1c1512);--card:light-dark(#fff6f2,#2a201b);--ink:light-dark(#1a1817,#f4e9e4);--mute:light-dark(#5e534f,#b9aaa3);--line:light-dark(#efc9bf,#45362f);--teal:light-dark(#0d7680,#5cc0c8);--claret:light-dark(#990f3d,#ef7aa0);--hero:light-dark(#0d7680,#0f5c63);--heroneg:light-dark(#990f3d,#7a1236);--track:light-dark(#f3cfc5,#3a2c26)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Libre Franklin",system-ui,-apple-system,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+header{max-width:760px;margin:auto;padding:calc(env(safe-area-inset-top) + 16px) max(5vw,16px) 8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+header h1{flex:1;margin:0;font-weight:800;font-size:34px;line-height:1.05}
+main{max-width:760px;margin:auto;padding:8px max(5vw,16px) calc(120px + env(safe-area-inset-bottom))}
+.vista{display:none}.vista.on{display:block}
+.seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--track)}
+.seg button{flex:1;min-height:40px;border:0;border-radius:9px;background:none;color:var(--ink);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px #0002}
+.hero{margin-top:16px;padding:22px;border-radius:20px;background:var(--hero);color:#fff}
+.hero.neg{background:var(--heroneg)}
+.hero .lbl{opacity:.92}
+.hero .big{margin:6px 0 14px;font-weight:800;font-size:clamp(40px,12vw,64px);line-height:1;white-space:nowrap}
+.bar{height:12px;border-radius:6px;background:rgba(255,255,255,.28);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;background:#fff;transition:width .5s}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.trio b{display:block;font-size:clamp(15px,4.6vw,20px);white-space:nowrap}
+.trio span{font-size:13px;opacity:.88}
+.card{margin-top:14px;padding:16px 18px;border-radius:16px;background:var(--card)}
+h2{margin:0 0 8px;font-size:20px;font-weight:800;line-height:1.2}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}.row.tot{font-weight:800}
+.n{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.mbar{height:10px;margin:8px 0;border-radius:5px;background:var(--track);overflow:hidden}
+.mbar i{display:block;height:100%;background:var(--teal)}.mbar i.over{background:var(--claret)}
+.muted{color:var(--mute);font-size:14px}
+input[type=range]{width:100%;height:44px;accent-color:var(--teal)}
+.item{display:flex;align-items:center;gap:12px;width:100%;margin-top:8px;padding:12px 16px;border:0;border-radius:14px;background:var(--card);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.item .t{flex:1}.item .t b{display:block;font-weight:600}.item .t .muted{display:block}
+.item .amt{font-weight:800;white-space:nowrap}
+.grp{display:flex;justify-content:space-between;gap:12px;margin:22px 2px 2px;font-weight:800;font-size:18px}
+.grp:first-child{margin-top:8px}
+.empty{padding:48px 16px;text-align:center;color:var(--mute)}
+.btn{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--teal);color:#fff;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--teal);border:2px solid var(--teal)}
+.btn.danger{background:transparent;color:var(--claret);padding:0 8px}
+.btn:disabled{opacity:.4}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--claret);outline-offset:2px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+nav.tabs button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;color:var(--mute);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+nav.tabs button.on{color:var(--teal)}
+nav.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.fab{position:fixed;z-index:6;right:max(5vw,18px);bottom:calc(84px + env(safe-area-inset-bottom));width:60px;height:60px;display:none;border:0;border-radius:50%;background:var(--claret);color:#fff;font-size:34px;line-height:1;box-shadow:0 6px 18px #0004;cursor:pointer}
+.fab.on{display:block}
+.modal{position:fixed;inset:0;z-index:10;display:none;align-items:flex-end;justify-content:center;background:#0008}
+.modal.on{display:flex}
+.sheet{width:100%;max-width:560px;max-height:92vh;overflow:auto;padding:22px 20px calc(20px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0;background:var(--card)}
+label{display:block;margin:14px 0 6px;font-weight:600;font-size:14px}
+.f{width:100%;min-height:48px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
+textarea.f{min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border:2px solid var(--line);border-radius:20px;background:none;color:var(--ink);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.acts .sp{flex:1}
+.toast{position:fixed;z-index:20;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:12px;padding:8px 8px 8px 16px;border-radius:12px;background:var(--ink);color:var(--bg);width:max-content;max-width:calc(100% - 32px)}
+.toast.on{display:flex}
+.toast button{min-height:36px;border:0;background:none;color:var(--bg);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><h1>Mis Finanzas</h1><span class="muted" id="hoy"></span></header>
+<main>
+  <section class="vista on" id="v-resumen">
+    <div class="seg"><button data-p="SEMANA">Semana</button><button data-p="MES" class="on">Mes</button><button data-p="ANO">Año</button></div>
+    <div id="aviso"></div>
+    <div class="hero" id="hero"></div>
+    <div class="card" id="desglose"></div>
+    <div class="card" id="variables"></div>
+    <div class="card">
+      <h2>Objetivo de ahorro: <span id="pct"></span> %</h2>
+      <input type="range" id="ahorro" min="0" max="50" step="5" aria-label="Porcentaje de ahorro">
+      <div class="muted" id="ahorroTxt"></div>
+    </div>
+    <div class="card">
+      <h2>Copia de seguridad</h2>
+      <p class="muted">Los datos se guardan solo en este móvil. Haz una copia de vez en cuando por si se borran los datos de Safari.</p>
+      <div class="acts"><button class="btn ghost" id="exp">Exportar</button><button class="btn ghost" id="imp">Importar</button><span class="sp"></span><button class="btn danger" id="reset">Borrar todo</button></div>
+    </div>
+  </section>
+  <section class="vista" id="v-ingresos"><div id="l-ingresos"></div></section>
+  <section class="vista" id="v-gastos"><div id="l-gastos"></div></section>
+  <section class="vista" id="v-registro"><div id="l-registro"></div></section>
+</main>
+<button class="fab" id="fab" aria-label="Añadir">+</button>
+<nav class="tabs">
+  <button data-v="resumen" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Resumen</button>
+  <button data-v="ingresos"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Ingresos</button>
+  <button data-v="gastos"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11.5l2-8H6.2"/></svg>Gastos</button>
+  <button data-v="registro"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Registro</button>
+</nav>
+<div class="modal" id="modal"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast"><span id="toastTxt"></span><button id="undo">Deshacer</button></div>
+
+<script>
+{
+const FREQ={SEMANAL:['Semanal',52],QUINCENAL:['Cada 2 semanas',26],MENSUAL:['Mensual',12],BIMESTRAL:['Cada 2 meses',6],TRIMESTRAL:['Trimestral',4],SEMESTRAL:['Semestral (2 al año)',2],ANUAL:['Anual',1]};
+const TIPOC={INGRESO:'Ingreso',GASTO_FIJO:'Fijo',GASTO_VARIABLE:'Variable'};
+const TIPOG={CAPRICHO:'Capricho',VARIABLE:'Gasto variable'};
+const PER={SEMANA:{cada:'a la semana',este:'esta semana',n:52},MES:{cada:'al mes',este:'este mes',n:12},ANO:{cada:'al año',este:'este año',n:1}};
+const KEY='misfinanzas-v1';
+const eur=new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'});
+const E=v=>eur.format(v);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fmtFecha=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})};
+const num=s=>{s=String(s).trim();if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const v=Number(s);return s&&isFinite(v)?v:NaN};
+const numTxt=v=>String(v).replace('.',',');
+const anual=c=>c.importe*FREQ[c.frecuencia][1];
+const vacio=t=>`<div class="empty"><p>${t}</p><p><b>Pulsa + para añadir</b></p></div>`;
+
+let S={conceptos:[],gastos:[],ahorro:10};
+try{const t=localStorage.getItem(KEY);if(t)S=Object.assign(S,JSON.parse(t))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let periodo='MES',vista='resumen',F=null,borrado=null,toastT=0;
+
+function rango(p,h){
+  const d=new Date(h.getFullYear(),h.getMonth(),h.getDate());
+  if(p==='SEMANA'){const ini=new Date(d);ini.setDate(d.getDate()-(d.getDay()+6)%7);const fin=new Date(ini);fin.setDate(ini.getDate()+6);return[ini,fin]}
+  if(p==='MES')return[new Date(d.getFullYear(),d.getMonth(),1),new Date(d.getFullYear(),d.getMonth()+1,0)];
+  return[new Date(d.getFullYear(),0,1),new Date(d.getFullYear(),11,31)];
+}
+
+function calcular(p){
+  const n=PER[p].n,h=new Date();
+  const suma=t=>S.conceptos.filter(c=>c.tipo===t).reduce((a,c)=>a+anual(c),0)/n;
+  const ing=suma('INGRESO'),fij=suma('GASTO_FIJO'),vari=suma('GASTO_VARIABLE');
+  const aho=ing*S.ahorro/100,cap=ing-fij-vari-aho;
+  const [ini,fin]=rango(p,h),a=iso(ini),b=iso(fin);
+  const del=S.gastos.filter(g=>g.fecha>=a&&g.fecha<=b);
+  const gC=del.filter(g=>g.tipo==='CAPRICHO').reduce((x,g)=>x+g.importe,0);
+  const gV=del.filter(g=>g.tipo==='VARIABLE').reduce((x,g)=>x+g.importe,0);
+  const exc=Math.max(0,gV-vari),rest=cap-gC-exc;
+  const hoy0=new Date(h.getFullYear(),h.getMonth(),h.getDate());
+  const dias=Math.max(1,Math.round((fin-hoy0)/864e5)+1);
+  return{ing,fij,vari,aho,cap,gC,gV,exc,rest,dias,porDia:rest>0?rest/dias:0};
+}
+
+function renderResumen(){
+  const r=calcular(periodo),P=PER[periodo];
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.p===periodo));
+  $('aviso').innerHTML=S.conceptos.some(c=>c.tipo==='INGRESO')?'':`<div class="card"><h2>Empieza por aquí</h2><p>Añade tus ingresos en <b>Ingresos</b> y tus gastos fijos y variables en <b>Gastos</b>. Luego apunta en <b>Registro</b> lo que te gastes.</p><button class="btn ghost" id="ejemplo">Probar con datos de ejemplo</button></div>`;
+  const neg=r.cap<0;
+  $('hero').classList.toggle('neg',neg);
+  const pc=r.cap>0?Math.min(100,(r.gC+r.exc)/r.cap*100):0;
+  $('hero').innerHTML=`<div class="lbl">Puedes gastar en caprichos ${P.cada}</div><div class="big">${E(r.cap)}</div>`+(neg
+    ?`<p style="margin:0">Tus gastos más el ahorro superan tus ingresos. Recorta algún gasto o baja el % de ahorro.</p>`
+    :`<div class="bar"><i style="width:${pc}%"></i></div><div class="trio"><div><b>${E(r.gC)}</b><span>gastado ${P.este}</span></div><div><b>${E(r.rest)}</b><span>te quedan</span></div><div><b>${E(r.porDia)}</b><span>al día, ${r.dias} ${r.dias===1?'día':'días'}</span></div></div>`
+      +(r.exc>0?`<p style="margin:12px 0 0;font-size:14px">Incluye ${E(r.exc)} que te has pasado en gastos variables.</p>`:''));
+  $('desglose').innerHTML=`<h2>De dónde sale, ${P.cada}</h2>`
+    +[['Ingresos','+',r.ing],['Gastos fijos','−',r.fij],['Gastos variables (estimados)','−',r.vari],[`Ahorro (${S.ahorro} %)`,'−',r.aho]]
+      .map(([t,s,v])=>`<div class="row"><span>${t}</span><span class="n">${s} ${E(v)}</span></div>`).join('')
+    +`<div class="row tot"><span>Para caprichos</span><span class="n">= ${E(r.cap)}</span></div>`;
+  const vp=r.vari>0?Math.min(100,r.gV/r.vari*100):(r.gV>0?100:0);
+  $('variables').innerHTML=`<h2>Gastos variables ${P.este}</h2><div class="mbar"><i class="${r.gV>r.vari?'over':''}" style="width:${vp}%"></i></div><div class="muted">${E(r.gV)} de ${E(r.vari)} previstos</div>`;
+  $('pct').textContent=S.ahorro;
+  $('ahorro').value=S.ahorro;
+  $('ahorroTxt').textContent=`${E(r.aho)} ${P.cada} · ${E(r.aho*P.n)} al año`;
+}
+
+function itemConcepto(c){
+  const extra=c.frecuencia!=='MENSUAL'?' · ≈ '+E(anual(c)/12)+'/mes':'';
+  return `<button class="item" data-c="${c.id}"><span class="t"><b>${esc(c.nombre)}</b><span class="muted">${FREQ[c.frecuencia][0]}${extra}</span></span><span class="amt">${E(c.importe)}</span></button>`;
+}
+const grupo=(t,l)=>l.length?`<div class="grp"><span>${t}</span><span class="n">${E(l.reduce((a,c)=>a+anual(c),0)/12)}/mes</span></div>`+l.map(itemConcepto).join(''):'';
+
+function renderListas(){
+  const by=t=>S.conceptos.filter(c=>c.tipo===t);
+  const ing=by('INGRESO'),fi=by('GASTO_FIJO'),va=by('GASTO_VARIABLE');
+  $('l-ingresos').innerHTML=ing.length?grupo('Ingresos',ing):vacio('Añade tu nómina, pagas extra, becas o trabajos puntuales, y cada cuánto los cobras.');
+  $('l-gastos').innerHTML=(fi.length||va.length)?grupo('Gastos fijos',fi)+grupo('Gastos variables (estimados)',va):vacio('Fijos: alquiler, móvil, gimnasio, seguros…<br>Variables: lo que sueles gastar en comida, transporte o luz.');
+  const g=[...S.gastos].sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.id-a.id);
+  $('l-registro').innerHTML=g.length?g.map(x=>`<button class="item" data-g="${x.id}"><span class="t"><b>${esc(x.descripcion)}</b><span class="muted">${fmtFecha(x.fecha)} · ${TIPOG[x.tipo]}</span></span><span class="amt">${E(x.importe)}</span></button>`).join(''):vacio('Apunta aquí lo que te gastas en caprichos y en gastos variables para saber cuánto te queda.');
+}
+
+function render(){renderResumen();renderListas()}
+
+function ir(v){
+  vista=v;
+  document.querySelectorAll('.vista').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  $('fab').classList.toggle('on',v!=='resumen');
+  window.scrollTo(0,0);
+}
+
+function abrir(html){$('sheet').innerHTML=html;$('modal').classList.add('on')}
+function cerrar(){$('modal').classList.remove('on');F=null}
+const botones=edit=>`<div class="acts">${edit?'<button class="btn danger" id="fDel">Borrar</button>':''}<span class="sp"></span><button class="btn ghost" id="fCan">Cancelar</button><button class="btn" id="fOk">Guardar</button></div>`;
+const chips=(tipos,nombres)=>`<div class="chips" id="fTipos">${tipos.map(t=>`<button class="chip${t===F.tipo?' on':''}" data-t="${t}">${nombres[t]}</button>`).join('')}</div>`;
+
+function formConcepto(c,tipos){
+  F={k:'c',id:c?c.id:Date.now(),tipo:c?c.tipo:tipos[0]};
+  const que=F.tipo==='INGRESO'?'ingreso':'gasto';
+  abrir(`<h2>${c?'Editar':'Nuevo'} ${que}</h2>`
+    +(tipos.length>1?chips(tipos,TIPOC)+'<p class="muted" id="fAyuda"></p>':'')
+    +`<label for="fNom">Concepto</label><input class="f" id="fNom" value="${c?esc(c.nombre):''}" autocomplete="off">
+    <label for="fImp">Importe (€)</label><input class="f" id="fImp" inputmode="decimal" value="${c?numTxt(c.importe):''}">
+    <label for="fFreq">¿Cada cuánto?</label><select class="f" id="fFreq">${Object.entries(FREQ).map(([k,[t]])=>`<option value="${k}"${(c?c.frecuencia:'MENSUAL')===k?' selected':''}>${t}</option>`).join('')}</select>
+    <p class="muted" id="fPrev"></p>`+botones(!!c));
+  validar();
+}
+
+function formGasto(g){
+  F={k:'g',id:g?g.id:Date.now(),tipo:g?g.tipo:'CAPRICHO'};
+  abrir(`<h2>${g?'Editar gasto':'Apuntar gasto'}</h2>`+chips(['CAPRICHO','VARIABLE'],TIPOG)
+    +`<label for="fNom">¿En qué?</label><input class="f" id="fNom" value="${g?esc(g.descripcion):''}" autocomplete="off">
+    <label for="fImp">Importe (€)</label><input class="f" id="fImp" inputmode="decimal" value="${g?numTxt(g.importe):''}">
+    <label for="fFecha">Fecha</label><input class="f" type="date" id="fFecha" value="${g?g.fecha:iso(new Date())}">`+botones(!!g));
+  validar();
+}
+
+function validar(){
+  if(!F)return;
+  const imp=num($('fImp').value);
+  $('fOk').disabled=!($('fNom').value.trim()&&imp>0&&(F.k==='c'||$('fFecha').value));
+  if(F.k!=='c')return;
+  const fr=FREQ[$('fFreq').value][1];
+  $('fPrev').textContent=imp>0?`≈ ${E(imp*fr/12)} al mes · ${E(imp*fr)} al año`:'';
+  const a=$('fAyuda');
+  if(a)a.textContent=F.tipo==='GASTO_VARIABLE'?'Pon lo que sueles gastar de media (comida, gasolina, luz…).':'Lo que pagas siempre igual: alquiler, móvil, gimnasio…';
+}
+
+function upsert(arr,o){const i=arr.findIndex(x=>x.id===o.id);if(i>=0)arr[i]=o;else arr.push(o)}
+
+function guardar(){
+  const imp=num($('fImp').value),nom=$('fNom').value.trim();
+  if(F.k==='c')upsert(S.conceptos,{id:F.id,nombre:nom,importe:imp,tipo:F.tipo,frecuencia:$('fFreq').value});
+  else upsert(S.gastos,{id:F.id,descripcion:nom,importe:imp,fecha:$('fFecha').value,tipo:F.tipo});
+  save();cerrar();render();
+}
+
+function toast(t,conUndo){
+  $('toastTxt').textContent=t;$('undo').style.display=conUndo?'':'none';
+  $('toast').classList.add('on');clearTimeout(toastT);
+  toastT=setTimeout(()=>$('toast').classList.remove('on'),5000);
+}
+
+function borrar(){
+  const key=F.k==='c'?'conceptos':'gastos',arr=S[key],i=arr.findIndex(x=>x.id===F.id);
+  if(i>=0){borrado={key,i,item:arr[i]};arr.splice(i,1);save()}
+  cerrar();render();toast('Borrado',true);
+}
+
+function cargarEjemplo(){
+  const h=new Date(),d=n=>{const x=new Date(h);x.setDate(h.getDate()-n);return iso(x)};let id=Date.now();
+  S.conceptos=[
+    {id:id++,nombre:'Nómina',importe:1450,tipo:'INGRESO',frecuencia:'MENSUAL'},
+    {id:id++,nombre:'Pagas extra',importe:1450,tipo:'INGRESO',frecuencia:'SEMESTRAL'},
+    {id:id++,nombre:'Alquiler',importe:550,tipo:'GASTO_FIJO',frecuencia:'MENSUAL'},
+    {id:id++,nombre:'Móvil e internet',importe:35,tipo:'GASTO_FIJO',frecuencia:'MENSUAL'},
+    {id:id++,nombre:'Gimnasio',importe:30,tipo:'GASTO_FIJO',frecuencia:'MENSUAL'},
+    {id:id++,nombre:'Seguro del coche',importe:380,tipo:'GASTO_FIJO',frecuencia:'ANUAL'},
+    {id:id++,nombre:'Supermercado',importe:60,tipo:'GASTO_VARIABLE',frecuencia:'SEMANAL'},
+    {id:id++,nombre:'Gasolina',importe:70,tipo:'GASTO_VARIABLE',frecuencia:'MENSUAL'}];
+  S.gastos=[
+    {id:id++,descripcion:'Cena con amigos',importe:32,fecha:d(1),tipo:'CAPRICHO'},
+    {id:id++,descripcion:'Supermercado',importe:58.4,fecha:d(2),tipo:'VARIABLE'},
+    {id:id++,descripcion:'Zapatillas',importe:65,fecha:d(3),tipo:'CAPRICHO'}];
+  save();render();toast('Datos de ejemplo cargados; bórralos con «Borrar todo»',false);
+}
+
+function exportar(){
+  abrir(`<h2>Exportar datos</h2><p class="muted">Guarda este texto (en Notas, por ejemplo) o descárgalo. Con él recuperas todo desde «Importar».</p>
+  <textarea class="f" id="jOut" readonly>${esc(JSON.stringify(S))}</textarea>
+  <div class="acts"><button class="btn ghost" id="descargar">Descargar archivo</button><span class="sp"></span><button class="btn ghost" id="fCan">Cerrar</button><button class="btn" id="copiar">Copiar</button></div>`);
+}
+function copiar(){
+  const b=$('copiar'),falla=()=>{$('jOut').select();b.textContent='Selecciona y copia'};
+  try{navigator.clipboard.writeText(JSON.stringify(S)).then(()=>{b.textContent='¡Copiado!'},falla)}catch(e){falla()}
+}
+function descargar(){
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));a.download='misfinanzas-'+iso(new Date())+'.json';document.body.appendChild(a);a.click();a.remove()}catch(e){}
+}
+function importar(){
+  abrir(`<h2>Importar datos</h2><p class="muted">Elige el archivo de una copia o pega su texto. Sustituirá los datos actuales.</p>
+  <input type="file" class="f" id="jFile" accept=".json,application/json,text/plain">
+  <textarea class="f" id="jIn" placeholder="O pega aquí la copia" style="margin-top:10px"></textarea>
+  <p class="muted" id="jErr"></p>
+  <div class="acts"><span class="sp"></span><button class="btn ghost" id="fCan">Cancelar</button><button class="btn" id="hacerImp">Importar</button></div>`);
+  $('jFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('jIn').value=t})});
+}
+function hacerImportar(){
+  try{
+    const d=JSON.parse($('jIn').value);
+    if(!Array.isArray(d.conceptos)||!Array.isArray(d.gastos))throw 0;
+    S={conceptos:d.conceptos,gastos:d.gastos,ahorro:Number(d.ahorro)||0};
+    save();cerrar();render();toast('Datos importados',false);
+  }catch(e){$('jErr').textContent='Ese texto no es una copia válida.'}
+}
+function pedirReset(){
+  abrir(`<h2>¿Borrar todos los datos?</h2><p>Se eliminarán ingresos, gastos y el registro. No se puede deshacer, así que exporta antes una copia si la quieres.</p>
+  <div class="acts"><span class="sp"></span><button class="btn ghost" id="fCan">Cancelar</button><button class="btn" id="hacerReset" style="background:var(--claret)">Borrar todo</button></div>`);
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  const ds=t.dataset;
+  if(ds.p){periodo=ds.p;renderResumen();return}
+  if(ds.v){ir(ds.v);return}
+  if(ds.c){const c=S.conceptos.find(x=>String(x.id)===ds.c);if(c)formConcepto(c,c.tipo==='INGRESO'?['INGRESO']:['GASTO_FIJO','GASTO_VARIABLE']);return}
+  if(ds.g){const g=S.gastos.find(x=>String(x.id)===ds.g);if(g)formGasto(g);return}
+  if(ds.t&&F){F.tipo=ds.t;document.querySelectorAll('#fTipos .chip').forEach(b=>b.classList.toggle('on',b===t));validar();return}
+  switch(t.id){
+    case 'fab':
+      if(vista==='ingresos')formConcepto(null,['INGRESO']);
+      else if(vista==='gastos')formConcepto(null,['GASTO_FIJO','GASTO_VARIABLE']);
+      else formGasto(null);
+      break;
+    case 'fOk':guardar();break;
+    case 'fCan':cerrar();break;
+    case 'fDel':borrar();break;
+    case 'ejemplo':cargarEjemplo();break;
+    case 'exp':exportar();break;
+    case 'imp':importar();break;
+    case 'copiar':copiar();break;
+    case 'descargar':descargar();break;
+    case 'hacerImp':hacerImportar();break;
+    case 'reset':pedirReset();break;
+    case 'hacerReset':S={conceptos:[],gastos:[],ahorro:10};save();cerrar();render();toast('Datos borrados',false);break;
+    case 'undo':
+      if(borrado){S[borrado.key].splice(borrado.i,0,borrado.item);borrado=null;save();render()}
+      $('toast').classList.remove('on');break;
+  }
+});
+const alCambiar=e=>{if(e.target.closest('#sheet'))validar()};
+document.addEventListener('input',alCambiar);
+document.addEventListener('change',alCambiar);
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')cerrar()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
+$('ahorro').addEventListener('input',e=>{S.ahorro=Number(e.target.value);save();renderResumen()});
+
+$('hoy').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+render();
+try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+}
+</script>
+</body>
+</html>
