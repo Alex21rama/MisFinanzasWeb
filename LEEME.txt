@@ -1,0 +1,45 @@
+MIS FINANZAS PARA IPHONE (app web instalable)
+
+Para instalarla hay que subir esta carpeta a una web gratuita. Con GitHub Pages:
+1. Crea un repositorio público en github.com (por ejemplo "mis-finanzas").
+2. "Add file > Upload files" y sube TODOS los archivos de esta carpeta.
+3. Settings > Pages > Branch: main / (root) > Save.
+4. En un minuto tendrás la URL: https://TU-USUARIO.github.io/mis-finanzas/
+
+En el iPhone:
+1. Abre esa URL en Safari.
+2. Botón Compartir > "Añadir a pantalla de inicio".
+3. Ábrela siempre desde el icono. Funciona sin conexión.
+
+Los datos se guardan en el propio iPhone. Usa "Exportar" de vez en cuando para tener una copia.
+
+ASESOR DE INVERSIÓN (pestaña Inversión)
+Necesita una clave gratuita de Gemini de cada usuario. Dentro de la app,
+el botón "¿Cómo consigo mi clave?" explica los pasos:
+1. Ir a https://aistudio.google.com/apikey con una cuenta de Google.
+2. Pulsar "Create API key" (no pide tarjeta) y copiar la clave.
+3. En la app: Inversión > Configurar > pegar la clave > Guardar.
+
+Usa el modelo gratuito gemini-3.5-flash-lite. Si está saturado, la app reintenta
+y prueba sola otros modelos gratuitos. Como los modelos gratuitos no buscan en
+Google, la página descarga antes los datos del momento de fuentes gratuitas:
+CoinGecko (Bitcoin, Ethereum, oro), Banco Central Europeo (tipos, inflación,
+euro/dólar) y GDELT (noticias). Los índices de bolsa (MSCI World, S&P 500...)
+no están disponibles desde el navegador; la versión Android sí los tiene.
+
+La clave se guarda solo en ese dispositivo. NO la escribas en ningún archivo
+de este repositorio: GitHub es público y alguien podría usarla.
+Nota: en la vista previa de Claude el asesor no funciona; usa la versión de GitHub Pages.
+
+IMPORTAR EL EXTRACTO DEL BANCO (pestaña Registro)
+Botón "Importar extracto del banco (Excel o CSV)". Admite .xlsx, .xls, .csv y los
+".xls" que en realidad son tablas HTML. Detecta solas las columnas de fecha,
+concepto e importe (o cargo/abono), clasifica cada movimiento (Ingreso, Fijo,
+Variable, Capricho, Puntual o Ignorar) y deja revisarlo antes de añadirlo.
+Recuerda tus correcciones y no duplica movimientos ya importados.
+Para leer Excel descarga la librería SheetJS de cdnjs la primera vez que se usa.
+
+PREVISIÓN (pestaña Resumen)
+Con los movimientos reales (apuntados o importados) calcula cuánto podrás gastar
+en caprichos la próxima semana, mes o año según lo que sueles ingresar y gastar.
+Necesita al menos 4 semanas de movimientos.
