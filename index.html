@@ -115,6 +115,9 @@ button.ley{cursor:pointer}.ley:last-child{border:0}
 .atrfila input{width:22px;height:22px;accent-color:var(--teal)}.atrfila .t{flex:1}
 .derecho{padding:12px 14px;margin-top:8px;border-radius:14px;background:var(--card)}
 .derecho .fila{display:flex;gap:10px;align-items:flex-start}.derecho .t{flex:1}
+.global{background:var(--hero);color:#fff}.global .muted{color:#fff;opacity:.85}
+.volver{border:0;background:none;color:var(--teal);font:inherit;font-weight:700;font-size:16px;min-height:44px;padding:0;cursor:pointer}
+.lectura .solo-cuenta,.lectura #ahorro,.lectura #aviso{display:none}
 .askbar.on~.toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 .card.err{background:light-dark(#F9DEDC,#4A1A1A)}
 .grupo{margin-top:12px}.grupo>span{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
@@ -137,17 +140,12 @@ ul.notas{padding-left:20px;margin:6px 0}ul.notas li{margin:6px 0}
 </head>
 <body>
 <header><h1>Mis Finanzas</h1><button class="cuentachip" data-a="cuentas" id="cuentaChip" aria-label="Cambiar de cuenta"></button><span class="muted" id="hoy" style="flex-basis:100%"></span></header>
-<div class="pcuentas" id="pantallaCuentas"><div class="pc-in">
-  <h1>Mis Finanzas</h1>
-  <h2>¿Qué cuenta quieres ver?</h2>
-  <p class="muted" style="margin-top:0">Cada cuenta tiene sus propios ingresos, gastos, movimientos y derechos de cobro.</p>
-  <div id="listaCuentas"></div>
-  <button class="btn" data-a="nuevaCuenta" style="width:100%;margin-top:16px">+ Añadir cuenta</button>
-</div></div>
+<div class="pcuentas" id="pantallaCuentas"><div class="pc-in" id="inicio"></div></div>
 <main>
   <section class="vista on" id="v-resumen">
     <div class="seg"><button data-p="SEMANA">Semana</button><button data-p="MES" class="on">Mes</button><button data-p="ANO">Año</button></div>
     <div id="aviso"></div>
+    <div class="hero" id="patri" style="display:none"></div>
     <div class="hero" id="hero"></div>
     <div class="card" id="graf"></div>
     <div class="card" id="derechosCard" style="background:light-dark(#FBF1D0,#2E2A17)"></div>
@@ -155,12 +153,12 @@ ul.notas{padding-left:20px;margin:6px 0}ul.notas li{margin:6px 0}
     <div class="card" id="prev"></div>
     <div class="card" id="variables"></div>
     <div class="card" id="real"></div>
-    <div class="card">
-      <h2>Objetivo de ahorro: <span id="pct"></span> %</h2>
+    <div class="card" id="cardAhorro">
+      <h2><span id="pctTitulo">Objetivo de ahorro</span>: <span id="pct"></span> %</h2>
       <input type="range" id="ahorro" min="0" max="50" step="5" aria-label="Porcentaje de ahorro">
       <div class="muted" id="ahorroTxt"></div>
     </div>
-    <div class="card">
+    <div class="card solo-cuenta">
       <h2>Copia de seguridad</h2>
       <p class="muted">Los datos se guardan solo en este móvil. Haz una copia de vez en cuando por si se borran los datos de Safari.</p>
       <div class="acts"><button class="btn ghost" id="exp">Exportar</button><button class="btn ghost" id="imp">Importar</button><span class="sp"></span><button class="btn danger" id="reset">Borrar todo</button></div>
@@ -229,8 +227,26 @@ const claveCuenta=id=>id===1?KEY:'misfinanzas-c-'+id;
 const leerJSON=(k,d)=>{try{const t=localStorage.getItem(k);return t?JSON.parse(t):d}catch(e){return d}};
 const escribirJSON=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const vacioS=()=>({conceptos:[],gastos:[],ahorro:10,derechos:[]});
-let CUENTAS=leerJSON(KEY_CUENTAS,null),CUENTA=null,APR=leerJSON(KEY_APR,null)||{},S=vacioS();
-if(!Array.isArray(CUENTAS)||!CUENTAS.length){CUENTAS=[{id:1,nombre:'Mi cuenta',banco:'',tipo:'CORRIENTE',ultimos4:'',color:0}];escribirJSON(KEY_CUENTAS,CUENTAS)}
+const KEY_BANCOS='misfinanzas-bancos';
+let BANCOS=leerJSON(KEY_BANCOS,[]),CUENTAS=leerJSON(KEY_CUENTAS,null),CUENTA=null,APR=leerJSON(KEY_APR,null)||{},S=vacioS();
+// LECTURA: se está viendo un resumen combinado (global o de un banco); no se guarda nada
+let LECTURA=null;
+if(!Array.isArray(BANCOS))BANCOS=[];
+if(!Array.isArray(CUENTAS)||!CUENTAS.length){
+  BANCOS=[{id:1,nombre:'Mi banco',color:0}];CUENTAS=[{id:1,bancoId:1,nombre:'Mi cuenta',tipo:'CORRIENTE',ultimos4:''}];
+  escribirJSON(KEY_BANCOS,BANCOS);escribirJSON(KEY_CUENTAS,CUENTAS);
+}else if(CUENTAS.some(c=>!c.bancoId||!BANCOS.some(b=>b.id===c.bancoId))){
+  // Versión anterior (solo cuentas): un banco por cada nombre de banco escrito; sin nombre → «Mi banco»
+  let sig=Math.max(0,...BANCOS.map(b=>b.id))+1;
+  CUENTAS.forEach(c=>{
+    if(c.bancoId&&BANCOS.some(b=>b.id===c.bancoId))return;
+    const nombre=String(c.banco||'').trim()||'Mi banco';
+    let b=BANCOS.find(x=>x.nombre.toLowerCase()===nombre.toLowerCase());
+    if(!b){b={id:sig++,nombre,color:BANCOS.length%7};BANCOS.push(b)}
+    c.bancoId=b.id;delete c.banco;delete c.color;
+  });
+  escribirJSON(KEY_BANCOS,BANCOS);escribirJSON(KEY_CUENTAS,CUENTAS);
+}
 function cargarCuenta(id){
   S=Object.assign(vacioS(),leerJSON(claveCuenta(id),{}));
   if(S.aprendidas){ // versiones anteriores las guardaban dentro de la cuenta
@@ -240,7 +256,7 @@ function cargarCuenta(id){
   if(!Array.isArray(S.derechos))S.derechos=[];
   CUENTA=id;try{localStorage.setItem(KEY_ULTIMA,String(id))}catch(e){}
 }
-const save=()=>{if(CUENTA!=null)escribirJSON(claveCuenta(CUENTA),S)};
+const save=()=>{if(CUENTA!=null&&!LECTURA)escribirJSON(claveCuenta(CUENTA),S)};
 
 // Atribuciones: cada gasto se queda en lo que de verdad pagaste (importe − ingresos atribuidos, mínimo 0)
 // y los ingresos atribuidos dejan de contar como ingresos. Si el gasto ya no existe, el ingreso vuelve a contar.
@@ -349,7 +365,8 @@ function renderResumen(){
       .map(([t,s,v])=>`<div class="row"><span>${t}</span><span class="n">${s} ${E(v)}</span></div>`).join('')
     +`<div class="row tot"><span>Balance</span><span class="n">= ${E(r.gI-gT)}</span></div>`;
   renderPrevision();
-  $('pct').textContent=S.ahorro;
+  $('pct').textContent=String(S.ahorro).replace('.',',');
+  $('pctTitulo').textContent=LECTURA?'Ahorro medio de tus cuentas':'Objetivo de ahorro';
   $('ahorro').value=S.ahorro;
   $('ahorroTxt').textContent=`${E(r.aho)} ${P.cada} · ${E(r.aho*P.n)} al año`;
 }
@@ -681,11 +698,15 @@ function hojaConfig(){
 }
 
 const ACC={
-  cuentas:()=>mostrarCuentas(),
+  cuentas:()=>volver(),
+  inicio:()=>mostrarInicio(),
+  nuevoBanco:()=>hojaBanco(null),
+  guardarBanco,
+  borrarBanco:pedirBorrado,
   nuevaCuenta:()=>hojaCuenta(null),
   guardarCuenta,
-  borrarCuenta:pedirBorrarCuenta,
-  borrarCuentaSi:borrarCuenta,
+  borrarCuenta:pedirBorrado,
+  borrarSi:borrarConfirmado,
   atribuir:()=>{if(F)hojaAtribuir(F.id)},
   guardarAtr:guardarAtribucion,
   volverGasto:()=>{const g=ATR&&S.gastos.find(x=>x.id===ATR.gid);ATR=null;if(g)formGasto(g);else cerrar()},
@@ -845,7 +866,7 @@ const RE={
   importe:/importe|cantidad|amount|monto|euros|^eur$|^€$/, cargo:/cargo|debe|debito|salida|gasto|reintegro|pagos?$/,
   abono:/abono|haber|credito|entrada|ingreso/,
   desc:/concepto|descrip|movimiento|detalle|observ|beneficiario|comercio|remitente|ordenante|destinatario|informaci|referencia|texto|asunto|operaci/,
-  excluir:/saldo|balance|divisa|moneda|currency|oficina|categor/
+  excluir:/saldo|balance|divisa|moneda|currency|oficina|categor/,saldo:/^saldo|saldo$|^saldo |balance/
 };
 function buscarCabecera(filas){
   for(let i=0;i<Math.min(40,filas.length);i++){
@@ -859,7 +880,9 @@ function buscarCabecera(filas){
     const usadas=new Set([fecha,importe,cargo,abono,...fechas].filter(x=>x!=null));
     let desc=tx.map((t,j)=>j).filter(j=>!usadas.has(j)&&tx[j]&&RE.desc.test(tx[j])&&!RE.excluir.test(tx[j]));
     if(!desc.length)desc=tx.map((t,j)=>j).filter(j=>!usadas.has(j)&&tx[j]&&!RE.excluir.test(tx[j]));
-    return {fila:i,cols:importe!=null?{fecha,desc,importe}:{fecha,desc,cargo,abono}};
+    const saldoIdx=tx.findIndex((t,k)=>k!==fecha&&t&&t.length<40&&RE.saldo.test(t));
+    const saldo=saldoIdx<0?null:saldoIdx;
+    return {fila:i,cols:importe!=null?{fecha,desc,importe,saldo}:{fecha,desc,cargo,abono,saldo}};
   }
   return null;
 }
@@ -892,7 +915,7 @@ function interpretar(filasBrutas){
     if(!cols)return {movs:[],avisos:['No he encontrado columnas de fecha e importe. Prueba a exportar el extracto en Excel o CSV desde la web del banco.']};
     datos=filas;avisos.push('El archivo no tiene una cabecera clara: he deducido las columnas por su contenido. Revisa el resultado.');
   }
-  const movs=[];
+  const movs=[],saldos=[];
   for(const f of datos){
     const fecha=fechaDe(f[cols.fecha]);if(!fecha)continue;
     let imp;
@@ -903,11 +926,16 @@ function interpretar(filasBrutas){
     }
     if(imp==null||imp===0)continue;
     const desc=[...new Set(cols.desc.map(j=>f[j]&&f[j].t==='s'?f[j].v.replace(/\s+/g,' ').trim():'').filter(Boolean))].join(' · ')||'Movimiento';
+    if(cols.saldo!=null){const sv=importeDe(f[cols.saldo]);if(sv!=null)saldos.push([fecha,Math.round(sv*100)/100])}
     movs.push({fecha,descripcion:desc,importe:Math.round(imp*100)/100});
   }
   if(!movs.length)avisos.push('No he encontrado movimientos con fecha e importe en el archivo.');
   else if(cols.importe!=null&&movs.every(m=>m.importe>0))avisos.push('Todos los importes son positivos, así que no sé cuáles son gastos. Revisa los tipos antes de importar.');
-  return {movs,avisos};
+  // Saldo tras el movimiento más reciente (si el extracto va del nuevo al viejo, el primero de ese día)
+  let saldoFinal=null;
+  if(saldos.length){const max=saldos.reduce((m,x)=>x[0]>m?x[0]:m,saldos[0][0]),dia=saldos.filter(x=>x[0]===max);
+    saldoFinal=(saldos[0][0]>=saldos[saldos.length-1][0]?dia[0]:dia[dia.length-1]);}
+  return {movs,avisos,saldoFinal};
 }
 function clavesMov(movs){
   const vistos={};
@@ -945,13 +973,13 @@ let IMP=null;
 async function importarArchivo(archivo){
   IMP={cargando:true};hojaImport();
   try{
-    const {movs,avisos}=interpretar(await leerExtracto(await archivo.arrayBuffer()));
+    const {movs,avisos,saldoFinal}=interpretar(await leerExtracto(await archivo.arrayBuffer()));
     const ya=new Set(S.gastos.map(g=>g.clave).filter(Boolean));
     const claves=clavesMov(movs);
     const filas=movs.map((m,i)=>{const sg=sugerir(m.descripcion,m.importe);
       return {id:i,mov:m,clave:claves[i],sugerido:sg,tipo:sg.tipo,sub:sg.sub,dudoso:!esSeguro(m.descripcion,m.importe),dup:ya.has(claves[i])}})
       .sort((a,b)=>b.mov.fecha.localeCompare(a.mov.fecha));
-    IMP={filas,avisos,error:filas.length?null:(avisos[0]||'No he encontrado movimientos.')};
+    IMP={filas,avisos,saldoFinal,error:filas.length?null:(avisos[0]||'No he encontrado movimientos.')};
   }catch(e){
     IMP={error:`No he podido leer el archivo (${e.message||e}). Prueba a exportar el extracto desde la web del banco en Excel o CSV.`};
   }
@@ -977,6 +1005,7 @@ function hojaImport(){
       <b>${IMP.filas.length} movimientos en el archivo</b>
       <p style="margin:4px 0">Se añadirán ${sel.length}: ${E(ing)} de ingresos y ${E(gas)} de gastos.</p>
       ${dups?`<p class="muted" style="margin:4px 0">${dups} ya estaban importados y se omiten.</p>`:''}
+      ${IMP.saldoFinal?`<p class="muted" style="margin:4px 0">Saldo según el extracto: ${E(IMP.saldoFinal[1])} (${fmtFecha(IMP.saldoFinal[0])}). Se guardará como saldo de la cuenta.</p>`:''}
       <p class="muted" style="margin:4px 0">Cambia el tipo de los que haga falta. La app recordará tus cambios para la próxima vez.</p>
     </div>
     ${IMP.avisos.map(a=>`<p class="muted" style="margin:10px 0 0"><b>Ojo:</b> ${esc(a)}</p>`).join('')}
@@ -1065,61 +1094,163 @@ function confirmarImport(){
     const k=claveComercio(f.mov.descripcion);if(k)APR[k]=f.tipo?f.tipo+'|'+(f.sub||''):'IGNORAR';
   });
   escribirJSON(KEY_APR,APR);
+  // El extracto trae el saldo: se guarda en la cuenta si es más reciente que el que había
+  const cu=CUENTAS.find(c=>c.id===CUENTA);
+  if(cu&&IMP.saldoFinal&&(!cu.saldoFecha||IMP.saldoFinal[0]>=cu.saldoFecha)){cu.saldo=IMP.saldoFinal[1];cu.saldoFecha=IMP.saldoFinal[0];escribirJSON(KEY_CUENTAS,CUENTAS)}
   save();IMP=null;cerrar();render();ir('registro');toast(`Se han añadido ${sel.length} movimientos del extracto`,false);
 }
 
 
-// ---------- Cuentas ----------
-const COLORES_CUENTA=['#1E7A46','#0E7C86','#2F5DA8','#7A4FA0','#B0541E','#A87A0C','#555F58'];
+// ---------- Bancos y cuentas ----------
+const COLORES_BANCO=['#1E7A46','#0E7C86','#2F5DA8','#7A4FA0','#B0541E','#A87A0C','#555F58'];
 const TIPOS_CUENTA={CORRIENTE:'Cuenta corriente',AHORRO:'Cuenta de ahorro',TARJETA:'Tarjeta',EFECTIVO:'Efectivo',OTRA:'Otra'};
-const colorCuenta=c=>COLORES_CUENTA[((c.color||0)%COLORES_CUENTA.length+COLORES_CUENTA.length)%COLORES_CUENTA.length];
-const detalleCuenta=c=>[c.banco,TIPOS_CUENTA[c.tipo]||'',c.ultimos4?'•••• '+c.ultimos4:''].filter(Boolean).join(' · ');
-let CUENTA_EDIT=null;
+const colorBanco=b=>COLORES_BANCO[(((b&&b.color)||0)%7+7)%7];
+const bancoDe=c=>c&&BANCOS.find(b=>b.id===c.bancoId);
+const saldoTotal=cs=>cs.reduce((a,c)=>a+(typeof c.saldo==='number'?c.saldo:0),0);
+const plural=(n,s,p)=>`${n} ${n===1?s:p}`;
+let EDIT=null,PANTALLA={v:'inicio'};
 
-function mostrarCuentas(){
-  const ultima=+(localStorage.getItem(KEY_ULTIMA)||1);
-  $('listaCuentas').innerHTML=CUENTAS.map(c=>`<div style="display:flex;align-items:center;gap:6px"><button class="cuentaitem" data-cuenta="${c.id}">
-      <span class="bola" style="background:${colorCuenta(c)}">${esc((c.nombre.trim()[0]||'€').toUpperCase())}</span>
-      <span class="t"><b>${esc(c.nombre)}</b><span class="muted">${esc(detalleCuenta(c))}</span>${c.id===ultima?'<span class="muted" style="display:block;color:var(--teal);font-weight:600">Última que abriste</span>':''}</span>
-    </button><button class="editar" data-editcuenta="${c.id}" aria-label="Editar ${esc(c.nombre)}">Editar</button></div>`).join('');
-  $('pantallaCuentas').classList.add('on');
+function mostrarPantalla(html){
+  $('inicio').innerHTML=html;$('pantallaCuentas').classList.add('on');$('pantallaCuentas').scrollTop=0;
   $('tabs').style.display='none';$('fab').classList.remove('on');$('askbar').classList.remove('on');
 }
+function mostrarInicio(){
+  PANTALLA={v:'inicio'};LECTURA=null;CUENTA=null;
+  mostrarPantalla(`<h1>Mis Finanzas</h1>
+    <button class="cuentaitem global" data-resumen=""><span class="t"><span class="muted">Resumen global</span><b style="font-size:32px">${E(saldoTotal(CUENTAS))}</b>
+      <span class="muted">Patrimonio en ${plural(BANCOS.length,'banco','bancos')} · ${plural(CUENTAS.length,'cuenta','cuentas')}</span><b style="font-size:15px;margin-top:6px">Ver el resumen de todas las cuentas ›</b></span></button>
+    <h2 style="margin-top:22px">Tus bancos</h2>
+    ${BANCOS.length?'':'<p class="muted">Añade tu primer banco (Kutxabank, Revolut, Trade Republic…).</p>'}
+    ${BANCOS.map(b=>{const cs=CUENTAS.filter(c=>c.bancoId===b.id);return `<div style="display:flex;align-items:center;gap:6px"><button class="cuentaitem" data-banco="${b.id}">
+      <span class="bola" style="background:${colorBanco(b)}">${esc((b.nombre.trim()[0]||'€').toUpperCase())}</span>
+      <span class="t"><b>${esc(b.nombre)}</b><span class="muted">${plural(cs.length,'cuenta','cuentas')}</span></span><b style="white-space:nowrap">${E(saldoTotal(cs))}</b>
+    </button><button class="editar" data-editbanco="${b.id}" aria-label="Editar ${esc(b.nombre)}">Editar</button></div>`}).join('')}
+    <button class="btn" data-a="nuevoBanco" style="width:100%;margin-top:16px">+ Añadir banco</button>`);
+}
+function mostrarBanco(id){
+  const b=BANCOS.find(x=>x.id===id);if(!b)return mostrarInicio();
+  PANTALLA={v:'banco',id};LECTURA=null;CUENTA=null;
+  const cs=CUENTAS.filter(c=>c.bancoId===id),ultima=+(localStorage.getItem(KEY_ULTIMA)||0);
+  mostrarPantalla(`<button class="volver" data-a="inicio">‹ Bancos</button><h1>${esc(b.nombre)}</h1>
+    <div class="card" style="margin-top:0;border-left:6px solid ${colorBanco(b)}"><div class="muted">Tienes en ${esc(b.nombre)}</div><div style="font-size:30px;font-weight:800">${E(saldoTotal(cs))}</div>
+      ${cs.length?`<div class="acts" style="margin-top:10px"><button class="btn ghost" data-resumen="${id}">Resumen de ${esc(b.nombre)}</button></div>`:''}</div>
+    <h2 style="margin-top:20px">Cuentas</h2>
+    ${cs.length?'':`<p class="muted">Todavía no tienes cuentas en ${esc(b.nombre)}. Añade la primera (por ejemplo, «Plan Joven» o «Cuenta Ahorro»).</p>`}
+    ${cs.map(c=>`<div style="display:flex;align-items:center;gap:6px"><button class="cuentaitem" data-cuenta="${c.id}">
+      <span class="bola" style="background:${colorBanco(b)};width:40px;height:40px;font-size:18px">${esc((c.nombre.trim()[0]||'€').toUpperCase())}</span>
+      <span class="t"><b>${esc(c.nombre)}</b><span class="muted">${[TIPOS_CUENTA[c.tipo]||'',c.ultimos4?'•••• '+esc(c.ultimos4):''].filter(Boolean).join(' · ')}</span>${c.id===ultima?'<span class="muted" style="display:block;color:var(--teal);font-weight:600">Última que abriste</span>':''}</span>
+      <span style="text-align:right;white-space:nowrap"><b>${typeof c.saldo==='number'?E(c.saldo):'Sin saldo'}</b>${c.saldoFecha?`<span class="muted" style="display:block;font-size:12px">${fmtFecha(c.saldoFecha)}</span>`:''}</span>
+    </button><button class="editar" data-editcuenta="${c.id}" aria-label="Editar ${esc(c.nombre)}">Editar</button></div>`).join('')}
+    <button class="btn" data-a="nuevaCuenta" style="width:100%;margin-top:16px">+ Añadir cuenta</button>`);
+}
+function entrarEnApp(){
+  $('pantallaCuentas').classList.remove('on');$('tabs').style.display=LECTURA?'none':'';
+  document.body.classList.toggle('lectura',!!LECTURA);
+  IMP=null;GSEL=null;render();ir('resumen');
+}
 function abrirCuenta(id){
-  cargarCuenta(id);IMP=null;GSEL=null;
-  $('pantallaCuentas').classList.remove('on');$('tabs').style.display='';
-  const c=CUENTAS.find(x=>x.id===id);
-  $('cuentaChip').innerHTML=c?`<i style="background:${colorCuenta(c)}"></i>${esc(c.nombre)}${c.ultimos4?' · '+esc(c.ultimos4):''} ▾`:'';
-  render();ir('resumen');
+  LECTURA=null;cargarCuenta(id);
+  const c=CUENTAS.find(x=>x.id===id),b=bancoDe(c);PANTALLA={v:'cuenta',id,bancoId:c&&c.bancoId};
+  $('cuentaChip').innerHTML=c?`<i style="background:${colorBanco(b)}"></i>${esc(b?b.nombre+' · ':'')}${esc(c.nombre)} ▾`:'';
+  entrarEnApp();
+}
+// Resumen combinado: junta los datos de varias cuentas en modo solo lectura.
+// El % de ahorro es la media de cada cuenta ponderada por sus ingresos previstos.
+function abrirResumen(bancoId){
+  const cs=CUENTAS.filter(c=>bancoId==null||c.bancoId===bancoId);
+  const partes=cs.map(c=>Object.assign(vacioS(),leerJSON(claveCuenta(c.id),{})));
+  const ingMes=x=>x.conceptos.filter(k=>k.tipo==='INGRESO').reduce((a,k)=>a+anual(k),0)/12;
+  const peso=partes.map(ingMes),tp=peso.reduce((a,v)=>a+v,0);
+  const pct=tp>0?partes.reduce((a,x,i)=>a+x.ahorro*peso[i],0)/tp:(partes.length?partes.reduce((a,x)=>a+x.ahorro,0)/partes.length:10);
+  CUENTA=null;LECTURA={bancoId,cuentas:cs};
+  S={conceptos:partes.flatMap(x=>x.conceptos),gastos:partes.flatMap(x=>x.gastos),derechos:partes.flatMap(x=>x.derechos||[]),ahorro:Math.round(pct*10)/10};
+  PANTALLA={v:'resumen',bancoId};
+  const b=BANCOS.find(x=>x.id===bancoId);
+  $('cuentaChip').innerHTML=`‹ ${bancoId==null?'Resumen global':'Resumen de '+esc(b?b.nombre:'banco')}`;
+  entrarEnApp();
+}
+// Botón de cuenta de la cabecera: vuelve al nivel anterior
+function volver(){
+  if(PANTALLA.v==='cuenta'&&PANTALLA.bancoId!=null)return mostrarBanco(PANTALLA.bancoId);
+  if(PANTALLA.v==='resumen'&&PANTALLA.bancoId!=null)return mostrarBanco(PANTALLA.bancoId);
+  mostrarInicio();
+}
+function renderPatrimonio(){
+  const el=$('patri');
+  if(!LECTURA){el.style.display='none';return}
+  el.style.display='';
+  const cs=LECTURA.cuentas,total=saldoTotal(cs),sinSaldo=cs.filter(c=>typeof c.saldo!=='number').length;
+  let por,col;
+  if(LECTURA.bancoId==null){
+    const v=BANCOS.map(b=>({b,importe:saldoTotal(cs.filter(c=>c.bancoId===b.id))})).filter(x=>x.importe>0.005).sort((x,y)=>y.importe-x.importe);
+    por=v.map(x=>({nombre:x.b.nombre,importe:x.importe}));col=v.map(x=>colorBanco(x.b));
+  }else{
+    por=cs.filter(c=>(c.saldo||0)>0.005).sort((x,y)=>y.saldo-x.saldo).map(c=>({nombre:c.nombre,importe:c.saldo}));col=PALETA_SUB;
+  }
+  const tot=por.reduce((a,p)=>a+p.importe,0);
+  const fechas=cs.map(c=>c.saldoFecha).filter(Boolean).sort();
+  el.innerHTML=`<div class="lbl">Patrimonio</div><div class="big">${E(total)}</div>`
+    +(por.length?`<div style="background:var(--card);color:var(--ink);border-radius:14px;padding:12px 14px;margin-top:6px"><h3 style="margin:0">${LECTURA.bancoId==null?'¿Dónde tienes tu dinero?':'¿En qué cuenta está?'}</h3>${donut(por,col,E(tot),'en total')}`
+      +por.map((p,i)=>`<div class="ley"><i style="background:${col[i%col.length]}"></i><span class="t">${esc(p.nombre)}</span><span class="p">${Math.round(p.importe/tot*100)} %</span><span class="n" style="text-align:right">${E(p.importe)}</span></div>`).join('')+'</div>':'')
+    +(sinSaldo?`<p style="margin:10px 0 0;font-size:14px">${plural(sinSaldo,'cuenta no tiene','cuentas no tienen')} saldo: añádelo editando la cuenta o importando un extracto con la columna «Saldo».</p>`:'')
+    +(fechas.length?`<p style="margin:6px 0 0;font-size:13px;opacity:.85">Saldos según lo último que apuntaste o importaste (el más antiguo, del ${fmtFecha(fechas[0])}).</p>`:'');
+}
+function hojaBanco(b){
+  EDIT={tipo:'banco',id:b?b.id:null,color:b?b.color||0:BANCOS.length%7};
+  abrir(`<h2>${b?'Editar banco':'Nuevo banco'}</h2>
+    <label for="bNom">Nombre (p. ej. Kutxabank, Revolut, Trade Republic)</label><input class="f" id="bNom" value="${b?esc(b.nombre):''}" autocomplete="off">
+    <label>Color</label><div class="colores" id="cColores">${COLORES_BANCO.map((col,i)=>`<button style="background:${col}" data-color="${i}" class="${i===EDIT.color?'on':''}" aria-label="Color ${i+1}"></button>`).join('')}</div>
+    <div class="acts">${b?'<button class="btn danger" data-a="borrarBanco">Borrar banco</button>':''}<span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="guardarBanco">Guardar</button></div>`);
+}
+const nuevoId=()=>Math.max(Date.now(),...CUENTAS.map(x=>x.id+1),...BANCOS.map(x=>x.id+1));
+function guardarBanco(){
+  const nombre=$('bNom').value.trim();if(!nombre){$('bNom').focus();return}
+  const b={id:EDIT.id??nuevoId(),nombre,color:EDIT.color};
+  const i=BANCOS.findIndex(x=>x.id===b.id);if(i>=0)BANCOS[i]=b;else BANCOS.push(b);
+  escribirJSON(KEY_BANCOS,BANCOS);cerrar();PANTALLA.v==='banco'?mostrarBanco(PANTALLA.id):mostrarInicio();
 }
 function hojaCuenta(c){
-  CUENTA_EDIT={id:c?c.id:null,color:c?c.color||0:0};
+  EDIT={tipo:'cuenta',id:c?c.id:null,bancoId:c?c.bancoId:PANTALLA.id};
   abrir(`<h2>${c?'Editar cuenta':'Nueva cuenta'}</h2>
-    <label for="cNom">Nombre (p. ej. «Nómina», «Ahorro»)</label><input class="f" id="cNom" value="${c?esc(c.nombre):''}" autocomplete="off">
-    <label for="cBanco">Banco (opcional)</label><input class="f" id="cBanco" value="${c?esc(c.banco||''):''}" autocomplete="off">
+    <label for="cNom">Nombre (p. ej. «Plan Joven», «Cuenta Ahorro»)</label><input class="f" id="cNom" value="${c?esc(c.nombre):''}" autocomplete="off">
     <label for="cTipo">Tipo</label><select class="f" id="cTipo">${Object.entries(TIPOS_CUENTA).map(([k,v])=>`<option value="${k}"${(c?c.tipo:'CORRIENTE')===k?' selected':''}>${v}</option>`).join('')}</select>
+    <label for="cSaldo">Saldo actual (€)</label><input class="f" id="cSaldo" inputmode="decimal" value="${c&&typeof c.saldo==='number'?numTxt(c.saldo):''}" autocomplete="off">
+    <p class="muted" style="margin:4px 0 0">Lo que hay ahora en la cuenta. Se actualiza solo al importar un extracto con saldo.</p>
     <label for="c4">Últimos 4 dígitos (opcional)</label><input class="f" id="c4" inputmode="numeric" maxlength="4" value="${c?esc(c.ultimos4||''):''}" autocomplete="off">
     <p class="muted" style="margin:4px 0 0">Solo para distinguirla. No pongas el número completo.</p>
-    <label>Color</label><div class="colores" id="cColores">${COLORES_CUENTA.map((col,i)=>`<button style="background:${col}" data-color="${i}" class="${i===CUENTA_EDIT.color?'on':''}" aria-label="Color ${i+1}"></button>`).join('')}</div>
-    <div class="acts">${c&&CUENTAS.length>1?'<button class="btn danger" data-a="borrarCuenta">Borrar cuenta</button>':''}<span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="guardarCuenta">Guardar</button></div>`);
+    <div class="acts">${c?'<button class="btn danger" data-a="borrarCuenta">Borrar cuenta</button>':''}<span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="guardarCuenta">Guardar</button></div>`);
 }
 function guardarCuenta(){
   const nombre=$('cNom').value.trim();if(!nombre){$('cNom').focus();return}
-  const c={id:CUENTA_EDIT.id??Math.max(Date.now(),...CUENTAS.map(x=>x.id+1)),nombre,banco:$('cBanco').value.trim(),
-    tipo:$('cTipo').value,ultimos4:$('c4').value.replace(/\D/g,'').slice(0,4),color:CUENTA_EDIT.color};
+  const prev=CUENTAS.find(x=>x.id===EDIT.id),st=$('cSaldo').value.trim(),saldo=st?parseImporte(st):null;
+  if(st&&saldo==null){$('cSaldo').focus();return}
+  const antes=prev&&typeof prev.saldo==='number'?numTxt(prev.saldo):'';
+  const c={id:EDIT.id??nuevoId(),bancoId:EDIT.bancoId,nombre,tipo:$('cTipo').value,ultimos4:$('c4').value.replace(/\D/g,'').slice(0,4),
+    saldo,saldoFecha:saldo==null?null:(st!==antes?iso(new Date()):(prev&&prev.saldoFecha)||iso(new Date()))};
   const i=CUENTAS.findIndex(x=>x.id===c.id);if(i>=0)CUENTAS[i]=c;else CUENTAS.push(c);
-  escribirJSON(KEY_CUENTAS,CUENTAS);cerrar();
-  if($('pantallaCuentas').classList.contains('on'))mostrarCuentas();else abrirCuenta(CUENTA);
+  escribirJSON(KEY_CUENTAS,CUENTAS);cerrar();mostrarBanco(c.bancoId);
 }
-function pedirBorrarCuenta(){
-  const c=CUENTAS.find(x=>x.id===CUENTA_EDIT.id);if(!c)return;
-  abrir(`<h2>¿Borrar «${esc(c.nombre)}»?</h2><p>Se borrarán todos sus ingresos, gastos, movimientos y derechos de cobro. No se puede deshacer.</p>
-    <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="borrarCuentaSi" style="background:var(--rojo)">Borrar</button></div>`);
+function pedirBorrado(){
+  if(EDIT.tipo==='banco'){
+    const b=BANCOS.find(x=>x.id===EDIT.id),n=CUENTAS.filter(c=>c.bancoId===EDIT.id).length;if(!b)return;
+    abrir(`<h2>¿Borrar «${esc(b.nombre)}»?</h2><p>${n?`Se borrarán sus ${plural(n,'cuenta','cuentas')} con todos sus ingresos, gastos, movimientos y derechos de cobro. No se puede deshacer.`:'No tiene cuentas.'}</p>
+      <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="borrarSi" style="background:var(--rojo)">Borrar</button></div>`);
+  }else{
+    const c=CUENTAS.find(x=>x.id===EDIT.id);if(!c)return;
+    abrir(`<h2>¿Borrar «${esc(c.nombre)}»?</h2><p>Se borrarán todos sus ingresos, gastos, movimientos y derechos de cobro. No se puede deshacer.</p>
+      <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="borrarSi" style="background:var(--rojo)">Borrar</button></div>`);
+  }
 }
-function borrarCuenta(){
-  const id=CUENTA_EDIT.id;CUENTAS=CUENTAS.filter(x=>x.id!==id);escribirJSON(KEY_CUENTAS,CUENTAS);
-  try{localStorage.removeItem(claveCuenta(id))}catch(e){}
-  cerrar();if(CUENTA===id)CUENTA=null;mostrarCuentas();toast('Cuenta borrada',false);
+function borrarConfirmado(){
+  const quitar=ids=>ids.forEach(id=>{try{localStorage.removeItem(claveCuenta(id))}catch(e){}});
+  if(EDIT.tipo==='banco'){
+    quitar(CUENTAS.filter(c=>c.bancoId===EDIT.id).map(c=>c.id));
+    CUENTAS=CUENTAS.filter(c=>c.bancoId!==EDIT.id);BANCOS=BANCOS.filter(b=>b.id!==EDIT.id);
+    escribirJSON(KEY_CUENTAS,CUENTAS);escribirJSON(KEY_BANCOS,BANCOS);cerrar();mostrarInicio();toast('Banco borrado',false);
+  }else{
+    const bid=(CUENTAS.find(c=>c.id===EDIT.id)||{}).bancoId;quitar([EDIT.id]);
+    CUENTAS=CUENTAS.filter(c=>c.id!==EDIT.id);escribirJSON(KEY_CUENTAS,CUENTAS);cerrar();mostrarBanco(bid);toast('Cuenta borrada',false);
+  }
 }
 
 // ---------- Gráficos circulares ----------
@@ -1158,6 +1289,12 @@ function renderGraficos(){
 let DER_EDIT=null;
 function renderDerechosCard(){
   const pend=(S.derechos||[]).filter(d=>!d.cobrado);
+  if(LECTURA){
+    $('derechosCard').style.display=pend.length?'':'none';
+    $('derechosCard').innerHTML=`<h2>Te deben</h2><div style="font-size:28px;font-weight:800">${E(pend.reduce((a,d)=>a+d.importe,0))}</div><p class="muted" style="margin:2px 0 0">${plural(pend.length,'derecho de cobro pendiente','derechos de cobro pendientes')}. Se gestionan dentro de cada cuenta.</p>`;
+    return;
+  }
+  $('derechosCard').style.display='';
   $('derechosCard').innerHTML=`<h2>Te deben</h2>`+(pend.length
     ?`<div style="font-size:28px;font-weight:800">${E(pend.reduce((a,d)=>a+d.importe,0))}</div><p class="muted" style="margin:2px 0 0">${pend.length} ${pend.length===1?'derecho de cobro pendiente':'derechos de cobro pendientes'}</p>`
     :'<p class="muted" style="margin:0">Apunta aquí el dinero que te deben: lo que adelantaste a un amigo, gastos que te paga la empresa, una fianza…</p>')
@@ -1213,7 +1350,7 @@ function cobrar(registrar){
   DER_EDIT=null;save();render();hojaDerechos();toast(registrar?'Cobro apuntado':'Marcado como cobrado',false);
 }
 
-function render(){renderResumen();renderGraficos();renderDerechosCard();renderListas();renderInversion()}
+function render(){renderPatrimonio();renderResumen();renderGraficos();renderDerechosCard();renderListas();renderInversion()}
 
 function ir(v){
   vista=v;
@@ -1417,8 +1554,11 @@ document.addEventListener('click',e=>{
   if(ds.c){const c=S.conceptos.find(x=>String(x.id)===ds.c);if(c)formConcepto(c,c.tipo==='INGRESO'?['INGRESO']:['GASTO_FIJO','GASTO_VARIABLE']);return}
   if(ds.g){const g=S.gastos.find(x=>String(x.id)===ds.g);if(g)formGasto(g);return}
   if(ds.cuenta){abrirCuenta(+ds.cuenta);return}
+  if(ds.banco){mostrarBanco(+ds.banco);return}
+  if(ds.resumen!=null){abrirResumen(ds.resumen===''?null:+ds.resumen);return}
   if(ds.editcuenta){hojaCuenta(CUENTAS.find(x=>x.id===+ds.editcuenta));return}
-  if(ds.color!=null&&CUENTA_EDIT){CUENTA_EDIT.color=+ds.color;document.querySelectorAll('#cColores button').forEach(b=>b.classList.toggle('on',b===t));return}
+  if(ds.editbanco){hojaBanco(BANCOS.find(x=>x.id===+ds.editbanco));return}
+  if(ds.color!=null&&EDIT){EDIT.color=+ds.color;document.querySelectorAll('#cColores button').forEach(b=>b.classList.toggle('on',b===t));return}
   if(ds.gsel!=null){GSEL=ds.gsel||null;renderGraficos();return}
   if(ds.dacc){accionDerecho(ds.dacc,+ds.id);return}
   if(ds.sub&&F){F.sub=ds.sub;validar();return}
@@ -1468,7 +1608,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
 $('ahorro').addEventListener('input',e=>{S.ahorro=Number(e.target.value);save();renderResumen()});
 
 $('hoy').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-mostrarCuentas();
+mostrarInicio();
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 }
 </script>

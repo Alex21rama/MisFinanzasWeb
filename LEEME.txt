@@ -44,9 +44,12 @@ Con los movimientos reales (apuntados o importados) calcula cuánto podrás gast
 en caprichos la próxima semana, mes o año según lo que sueles ingresar y gastar.
 Necesita al menos 4 semanas de movimientos.
 
-CUENTAS
-Al abrir la app se elige la cuenta o se añade una nueva (nombre, banco, tipo,
-últimos 4 dígitos, color). Cada cuenta guarda sus propios datos.
+BANCOS Y CUENTAS
+Al abrir la app aparece el resumen global (patrimonio) y la lista de bancos.
+Dentro de cada banco están sus cuentas, cada una con sus propios datos y su saldo.
+El resumen global y el de cada banco juntan los datos de sus cuentas (solo lectura)
+y muestran cuánto dinero hay en cada banco o cuenta. El saldo de una cuenta se
+escribe al editarla o se actualiza solo al importar un extracto con columna «Saldo».
 
 SUBCATEGORÍAS, GRÁFICOS, ATRIBUCIONES Y DERECHOS DE COBRO
 - Cada tipo de movimiento tiene subcategorías (en Capricho: comida, ocio, ropa...).
