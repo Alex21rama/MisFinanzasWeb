@@ -43,3 +43,14 @@ PREVISIÓN (pestaña Resumen)
 Con los movimientos reales (apuntados o importados) calcula cuánto podrás gastar
 en caprichos la próxima semana, mes o año según lo que sueles ingresar y gastar.
 Necesita al menos 4 semanas de movimientos.
+
+CUENTAS
+Al abrir la app se elige la cuenta o se añade una nueva (nombre, banco, tipo,
+últimos 4 dígitos, color). Cada cuenta guarda sus propios datos.
+
+SUBCATEGORÍAS, GRÁFICOS, ATRIBUCIONES Y DERECHOS DE COBRO
+- Cada tipo de movimiento tiene subcategorías (en Capricho: comida, ocio, ropa...).
+- En Resumen hay un gráfico circular del gasto por tipo y por subcategoría.
+- Desde un gasto se pueden atribuir ingresos (Bizums de amigos): el gasto queda
+  en lo que pagaste de verdad.
+- "Te deben": derechos de cobro, con opción de apuntar el ingreso al cobrarlos.

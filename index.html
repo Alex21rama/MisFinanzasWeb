@@ -89,6 +89,32 @@ h3{margin:18px 0 6px;font-size:17px;font-weight:800}
 .dudoso{font-size:13px;color:var(--claret);font-weight:600}
 .pie{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));margin:16px -20px calc(-20px - env(safe-area-inset-bottom));padding:12px 20px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px}
 .pie .btn{flex:1}
+.pcuentas{position:fixed;inset:0;z-index:9;display:none;overflow:auto;background:var(--bg);padding:calc(env(safe-area-inset-top) + 24px) max(5vw,16px) 40px}
+.pcuentas.on{display:block}.pc-in{max-width:560px;margin:auto}
+.pc-in h1{margin:0 0 18px;font-size:34px;font-weight:800;line-height:1.05}
+.cuentaitem{display:flex;align-items:center;gap:14px;width:100%;margin-top:10px;padding:14px 12px 14px 14px;border:0;border-radius:16px;background:var(--card);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.cuentaitem .t{flex:1}.cuentaitem .t b{display:block;font-size:17px}
+.bola{flex:none;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px}
+.editar{flex:none;min-width:44px;min-height:44px;border:0;border-radius:12px;background:transparent;color:var(--mute);font:inherit;font-weight:600;cursor:pointer}
+.cuentachip{border:0;border-radius:20px;min-height:36px;padding:0 12px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px}
+.cuentachip i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.colores{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.colores button{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+.colores button.on{border-color:var(--ink)}
+:root{--c-fijo:light-dark(#155E37,#3FA36B);--c-variable:light-dark(#5DB37E,#7FD0A0);--c-capricho:#D4A72C;--c-puntual:#C0583A}
+.donut{position:relative;width:190px;height:190px;margin:8px auto}
+.donut svg{width:100%;height:100%}
+.donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.donut .c b{font-size:19px}
+.ley{display:flex;align-items:center;gap:10px;width:100%;padding:8px 2px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left}
+button.ley{cursor:pointer}.ley:last-child{border:0}
+.ley i{flex:none;width:14px;height:14px;border-radius:50%}.ley .t{flex:1}.ley .p{font-weight:800}.ley .n{color:var(--mute);min-width:84px}
+.tachado{text-decoration:line-through;color:var(--mute);font-weight:400;font-size:13px;display:block;text-align:right}
+.devuelto{display:block;font-size:13px;color:var(--teal)}
+.atrfila{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.atrfila input{width:22px;height:22px;accent-color:var(--teal)}.atrfila .t{flex:1}
+.derecho{padding:12px 14px;margin-top:8px;border-radius:14px;background:var(--card)}
+.derecho .fila{display:flex;gap:10px;align-items:flex-start}.derecho .t{flex:1}
 .askbar.on~.toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 .card.err{background:light-dark(#F9DEDC,#4A1A1A)}
 .grupo{margin-top:12px}.grupo>span{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
@@ -110,12 +136,21 @@ ul.notas{padding-left:20px;margin:6px 0}ul.notas li{margin:6px 0}
 </style>
 </head>
 <body>
-<header><h1>Mis Finanzas</h1><span class="muted" id="hoy"></span></header>
+<header><h1>Mis Finanzas</h1><button class="cuentachip" data-a="cuentas" id="cuentaChip" aria-label="Cambiar de cuenta"></button><span class="muted" id="hoy" style="flex-basis:100%"></span></header>
+<div class="pcuentas" id="pantallaCuentas"><div class="pc-in">
+  <h1>Mis Finanzas</h1>
+  <h2>¿Qué cuenta quieres ver?</h2>
+  <p class="muted" style="margin-top:0">Cada cuenta tiene sus propios ingresos, gastos, movimientos y derechos de cobro.</p>
+  <div id="listaCuentas"></div>
+  <button class="btn" data-a="nuevaCuenta" style="width:100%;margin-top:16px">+ Añadir cuenta</button>
+</div></div>
 <main>
   <section class="vista on" id="v-resumen">
     <div class="seg"><button data-p="SEMANA">Semana</button><button data-p="MES" class="on">Mes</button><button data-p="ANO">Año</button></div>
     <div id="aviso"></div>
     <div class="hero" id="hero"></div>
+    <div class="card" id="graf"></div>
+    <div class="card" id="derechosCard" style="background:light-dark(#FBF1D0,#2E2A17)"></div>
     <div class="card" id="desglose"></div>
     <div class="card" id="prev"></div>
     <div class="card" id="variables"></div>
@@ -157,8 +192,8 @@ ul.notas{padding-left:20px;margin:6px 0}ul.notas li{margin:6px 0}
 </main>
 <button class="fab" id="fab" aria-label="Añadir">+</button>
 <input type="file" id="fileExtracto" accept=".xlsx,.xls,.csv,.txt,.htm,.html,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden>
-<div class="askbar" id="askbar"><textarea class="f" id="pregunta" rows="1" placeholder="Haz una pregunta…"></textarea><button class="btn" data-a="enviar" aria-label="Enviar">Enviar</button></div>
-<nav class="tabs">
+<div class="askbar" id="askbar"><textarea class="f" id="pregunta" rows="1" enterkeyhint="send" placeholder="Haz una pregunta…"></textarea><button class="btn" data-a="enviar" aria-label="Enviar">Enviar</button></div>
+<nav class="tabs" id="tabs">
   <button data-v="resumen" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Resumen</button>
   <button data-v="ingresos"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Ingresos</button>
   <button data-v="gastos"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11.5l2-8H6.2"/></svg>Gastos</button>
@@ -187,9 +222,35 @@ const numTxt=v=>String(v).replace('.',',');
 const anual=c=>c.importe*FREQ[c.frecuencia][1];
 const vacio=t=>`<div class="empty"><p>${t}</p><p><b>Pulsa + para añadir</b></p></div>`;
 
-let S={conceptos:[],gastos:[],ahorro:10,aprendidas:{}};
-try{const t=localStorage.getItem(KEY);if(t)S=Object.assign(S,JSON.parse(t))}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+// Cada cuenta guarda sus datos aparte. La cuenta 1 usa la clave de siempre, así los datos
+// de antes de tener cuentas pasan a «Mi cuenta». Las correcciones de clasificación son comunes.
+const KEY_CUENTAS='misfinanzas-cuentas',KEY_APR='misfinanzas-aprendidas',KEY_ULTIMA='misfinanzas-ultima';
+const claveCuenta=id=>id===1?KEY:'misfinanzas-c-'+id;
+const leerJSON=(k,d)=>{try{const t=localStorage.getItem(k);return t?JSON.parse(t):d}catch(e){return d}};
+const escribirJSON=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const vacioS=()=>({conceptos:[],gastos:[],ahorro:10,derechos:[]});
+let CUENTAS=leerJSON(KEY_CUENTAS,null),CUENTA=null,APR=leerJSON(KEY_APR,null)||{},S=vacioS();
+if(!Array.isArray(CUENTAS)||!CUENTAS.length){CUENTAS=[{id:1,nombre:'Mi cuenta',banco:'',tipo:'CORRIENTE',ultimos4:'',color:0}];escribirJSON(KEY_CUENTAS,CUENTAS)}
+function cargarCuenta(id){
+  S=Object.assign(vacioS(),leerJSON(claveCuenta(id),{}));
+  if(S.aprendidas){ // versiones anteriores las guardaban dentro de la cuenta
+    Object.keys(S.aprendidas).forEach(k=>{if(!(k in APR))APR[k]=S.aprendidas[k]});
+    delete S.aprendidas;escribirJSON(KEY_APR,APR);
+  }
+  if(!Array.isArray(S.derechos))S.derechos=[];
+  CUENTA=id;try{localStorage.setItem(KEY_ULTIMA,String(id))}catch(e){}
+}
+const save=()=>{if(CUENTA!=null)escribirJSON(claveCuenta(CUENTA),S)};
+
+// Atribuciones: cada gasto se queda en lo que de verdad pagaste (importe − ingresos atribuidos, mínimo 0)
+// y los ingresos atribuidos dejan de contar como ingresos. Si el gasto ya no existe, el ingreso vuelve a contar.
+function netos(gs){
+  const ids=new Set(gs.filter(g=>g.tipo!=='INGRESO').map(g=>g.id)),atr={};
+  const esAtr=g=>g.tipo==='INGRESO'&&g.atribuidoA!=null&&ids.has(g.atribuidoA);
+  gs.forEach(g=>{if(esAtr(g))atr[g.atribuidoA]=(atr[g.atribuidoA]||0)+g.importe});
+  return gs.filter(g=>!esAtr(g)).map(g=>atr[g.id]?Object.assign({},g,{importe:Math.max(0,g.importe-atr[g.id])}):g);
+}
+function atribuidoPorGasto(gs){const m={};gs.forEach(g=>{if(g.tipo==='INGRESO'&&g.atribuidoA!=null)m[g.atribuidoA]=(m[g.atribuidoA]||0)+g.importe});return m}
 let periodo='MES',vista='resumen',F=null,borrado=null,toastT=0;
 
 function rango(p,h){
@@ -205,7 +266,7 @@ function calcular(p){
   const ing=suma('INGRESO'),fij=suma('GASTO_FIJO'),vari=suma('GASTO_VARIABLE');
   const aho=ing*S.ahorro/100,cap=ing-fij-vari-aho;
   const [ini,fin]=rango(p,h),a=iso(ini),b=iso(fin);
-  const del=S.gastos.filter(g=>g.fecha>=a&&g.fecha<=b);
+  const del=netos(S.gastos).filter(g=>g.fecha>=a&&g.fecha<=b);
   const gC=del.filter(g=>g.tipo==='CAPRICHO').reduce((x,g)=>x+g.importe,0);
   const gV=del.filter(g=>g.tipo==='VARIABLE').reduce((x,g)=>x+g.importe,0);
   const suma2=t=>del.filter(g=>g.tipo===t).reduce((x,g)=>x+g.importe,0);
@@ -224,7 +285,7 @@ function prevision(p){
   const n=PER[p].n,hoy=new Date(),h0=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate());
   const ayer=new Date(h0);ayer.setDate(h0.getDate()-1);
   const haceUnAno=new Date(h0);haceUnAno.setDate(h0.getDate()-365);
-  const previos=S.gastos.filter(g=>g.fecha>=iso(haceUnAno)&&g.fecha<=iso(ayer));
+  const previos=netos(S.gastos).filter(g=>g.fecha>=iso(haceUnAno)&&g.fecha<=iso(ayer));
   if(!previos.length)return null;
   const dd=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5)+1;
   const primero=previos.reduce((m,g)=>g.fecha<m?g.fecha:m,previos[0].fecha);
@@ -311,7 +372,16 @@ function renderListas(){
     :vacio('Fijos: alquiler, móvil, gimnasio, seguros…<br>Variables: lo que sueles gastar en comida, transporte o luz.<br>Puntuales: el dentista, un regalo, una reparación…');
   const g=[...S.gastos].sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.id-a.id);
   const botonImp='<button class="btn ghost" data-a="importar" style="width:100%;margin-top:8px">Importar extracto del banco (Excel o CSV)</button>';
-  $('l-registro').innerHTML=botonImp+(g.length?g.map(x=>`<button class="item" data-g="${x.id}"><span class="t"><b>${esc(x.descripcion)}</b><span class="muted">${fmtFecha(x.fecha)} · ${TIPOG[x.tipo]||x.tipo}</span></span><span class="amt"${x.tipo==='INGRESO'?' style="color:var(--teal)"':''}>${x.tipo==='INGRESO'?'+':''}${E(x.importe)}</span></button>`).join(''):vacio('Apunta aquí lo que te gastas: caprichos, gastos variables y gastos puntuales (dentista, un regalo…). O importa el extracto de tu banco.'));
+  const atr=atribuidoPorGasto(S.gastos),porId={};S.gastos.forEach(x=>porId[x.id]=x);
+  $('l-registro').innerHTML=botonImp+(g.length?g.map(x=>{
+    const esIng=x.tipo==='INGRESO',dev=esIng?0:(atr[x.id]||0),dest=esIng&&x.atribuidoA!=null?porId[x.atribuidoA]:null;
+    const importe=dev>0?`<span class="amt"><span class="tachado">${E(x.importe)}</span>${E(Math.max(0,x.importe-dev))}</span>`
+      :`<span class="amt"${esIng?` style="color:${dest?'var(--mute)':'var(--teal)'}"`:''}>${esIng?'+':''}${E(x.importe)}</span>`;
+    return `<button class="item" data-g="${x.id}"><span class="t"><b>${esc(x.descripcion)}</b><span class="muted">${fmtFecha(x.fecha)} · ${TIPOG[x.tipo]||x.tipo} · ${esc(nombreSub(x.tipo,x.subcategoria))}</span>`
+      +(dev>0?`<span class="devuelto">Te han devuelto ${E(dev)}</span>`:'')
+      +(dest?`<span class="devuelto">↩ Devuelto por «${esc(dest.descripcion)}»</span>`:'')
+      +`</span>${importe}</button>`;
+  }).join(''):vacio('Apunta aquí lo que te gastas: caprichos, gastos variables y gastos puntuales (dentista, un regalo…). O importa el extracto de tu banco.'));
 }
 
 // ---------- Asesor de inversión (Gemini gratis + datos de mercado descargados por la página) ----------
@@ -611,6 +681,20 @@ function hojaConfig(){
 }
 
 const ACC={
+  cuentas:()=>mostrarCuentas(),
+  nuevaCuenta:()=>hojaCuenta(null),
+  guardarCuenta,
+  borrarCuenta:pedirBorrarCuenta,
+  borrarCuentaSi:borrarCuenta,
+  atribuir:()=>{if(F)hojaAtribuir(F.id)},
+  guardarAtr:guardarAtribucion,
+  volverGasto:()=>{const g=ATR&&S.gastos.find(x=>x.id===ATR.gid);ATR=null;if(g)formGasto(g);else cerrar()},
+  quitarAtr:()=>{const g=F&&S.gastos.find(x=>x.id===F.id);if(g){g.atribuidoA=null;save();render();formGasto(g)}},
+  derechos:hojaDerechos,
+  nuevoDerecho:()=>hojaDerecho(null),
+  guardarDerecho,
+  cobrarSi:()=>cobrar(true),
+  cobrarNo:()=>cobrar(false),
   importar:()=>{const i=$('fileExtracto');i.value='';i.click()},
   cerrarImp:()=>{IMP=null;cerrar()},
   confirmarImp:confirmarImport,
@@ -627,7 +711,9 @@ const ACC={
   nueva:()=>{CH=[];inv.error=null;inv.pendiente=null;saveChat();renderInversion()}
 };
 
-const KW={"IGNORAR": ["traspaso", "transferencia a cuenta propia", "transf. a cuenta propia", "entre cuentas", "cuenta propia", "amortizacion tarjeta", "liquidacion tarjeta", "pago tarjeta credito", "cargo tarjeta credito"], "FIJO": ["alquiler", "hipoteca", "prestamo", "comunidad de propietarios", "comunidad prop", "ibi ", "impuesto vehic", "iberdrola", "endesa", "naturgy", "repsol luz", "totalenergies", "holaluz", "octopus", "canal de isabel", "consorcio de aguas", "aguas de", "movistar", "telefonica", "vodafone", "orange", "digi", "pepephone", "jazztel", "masmovil", "yoigo", "simyo", "lowi", "euskaltel", "o2 ", "seguro", "mapfre", "mutua", "allianz", "axa", "generali", "linea directa", "sanitas", "adeslas", "dkv", "caser", "reale", "netflix", "spotify", "hbo", "max.com", "disney", "prime video", "amazon prime", "dazn", "movistar plus", "filmin", "apple.com/bill", "icloud", "google storage", "youtube premium", "gimnasio", "gym", "basic-fit", "basicfit", "anytime fitness", "mcfit", "fitness park", "kirol", "cuota", "suscripcion", "matricula", "colegio", "guarderia", "academia", "autoescuela"], "VARIABLE": ["mercadona", "carrefour", "lidl", "eroski", "aldi", "alcampo", "auchan", "consum", "bm supermerc", "bm ", "supermercados dia", "dia retail", "hipercor", "el corte ingles super", "caprabo", "condis", "bonpreu", "gadis", "froiz", "simply", "ahorramas", "masymas", "spar", "supermerc", "frutas", "carniceria", "panaderia", "fruteria", "gasolin", "estacion de servicio", "e.s. ", "repsol", "cepsa", "moeve", "galp", "bp ", "shell", "petronor", "ballenoil", "plenoil", "avia ", "farmacia", "renfe", "metro bilbao", "metro de", "bizkaibus", "bilbobus", "euskotren", "dbus", "tmb", "emt ", "alsa", "taxi", "cabify", "uber ", "bolt", "parking", "aparcamiento", "peaje", "autopista", "ota ", "barik", "recarga transporte", "cajero", "reintegro"], "CAPRICHO": ["restaurante", "rest.", "bar ", "taberna", "cafeteria", "cafe ", "pizzeria", "burger", "mcdonald", "kfc", "telepizza", "domino", "foster", "goiko", "vips", "glovo", "just eat", "uber eats", "deliveroo", "cervec", "pub ", "discoteca", "sidreria", "asador", "cine", "yelmo", "cinesa", "kinepolis", "teatro", "ticketmaster", "entradas", "concierto", "museo", "zara", "primark", "h&m", "hm ", "pull&bear", "bershka", "stradivarius", "mango", "decathlon", "jd sports", "foot locker", "nike", "adidas", "sprinter", "el corte ingles", "amazon", "amzn", "aliexpress", "shein", "temu", "zalando", "ebay", "vinted", "wallapop", "steam", "playstation", "xbox", "nintendo", "epic games", "game ", "fnac", "media markt", "mediamarkt", "pccomponentes", "booking", "airbnb", "ryanair", "vueling", "iberia", "volotea", "hotel", "viaje", "edreams", "peluqueria", "barberia", "perfumeria", "druni", "sephora", "primor"], "PUNTUAL": ["dentista", "clinica", "hospital", "medico", "optica", "veterinari", "taller", "reparacion", "itv", "multa", "sancion", "tasa", "notaria", "abogado", "ferreteria", "leroy merlin", "ikea", "bricomart"], "GENERICAS": ["compra", "compras", "tarjeta", "tarj", "pago", "pagos", "en", "con", "de", "del", "la", "el", "los", "las", "a", "y", "recibo", "adeudo", "cargo", "transferencia", "transf", "bizum", "enviado", "recibido", "contactless", "movil", "apple", "pay", "google", "debito", "credito", "operacion", "num", "ref", "fecha", "visa", "mastercard", "es", "esp", "sl", "sa", "s.l", "s.a"]};
+// Generado a partir de gen/reglas.py (mismas reglas que la versión Android)
+const SUBCAT={"INGRESO": [["nomina", "Nómina"], ["bizum", "Bizum y transferencias"], ["devoluciones", "Devoluciones"], ["otros", "Otros ingresos"]], "FIJO": [["vivienda", "Vivienda"], ["suministros", "Luz, agua y gas"], ["telecom", "Móvil e internet"], ["seguros", "Seguros"], ["suscripciones", "Suscripciones"], ["deporte", "Deporte"], ["educacion", "Educación"], ["prestamos", "Préstamos"], ["otros", "Otros fijos"]], "VARIABLE": [["supermercado", "Supermercado"], ["combustible", "Combustible"], ["transporte", "Transporte y parking"], ["farmacia", "Farmacia y salud"], ["efectivo", "Efectivo"], ["otros", "Otros variables"]], "CAPRICHO": [["comida", "Comida y bebida"], ["ocio", "Ocio y cultura"], ["ropa", "Ropa y calzado"], ["compras", "Compras y tecnología"], ["viajes", "Viajes"], ["belleza", "Belleza y cuidado"], ["regalos", "Regalos"], ["otros", "Otros caprichos"]], "PUNTUAL": [["salud", "Salud"], ["vehiculo", "Coche y reparaciones"], ["hogar", "Hogar y muebles"], ["tramites", "Trámites, multas e impuestos"], ["educacion", "Formación"], ["regalos", "Regalos"], ["otros", "Otros puntuales"]]};
+const REGLAS=[["IGNORAR", null, ["traspaso", "transferencia a cuenta propia", "transf. a cuenta propia", "entre cuentas", "cuenta propia", "amortizacion tarjeta", "liquidacion tarjeta", "pago tarjeta credito", "cargo tarjeta credito"]], ["INGRESO", "nomina", ["nomina", "salario", "haberes", "paga extra", "pension", "prestacion", "sepe", "beca"]], ["INGRESO", "devoluciones", ["devolucion", "reembolso", "abono compra", "anulacion", "reintegro compra", "cashback"]], ["INGRESO", "bizum", ["bizum", "transferencia", "transf", "ingreso efectivo", "traspaso recibido"]], ["FIJO", "vivienda", ["alquiler", "hipoteca", "comunidad de propietarios", "comunidad prop", "ibi "]], ["FIJO", "suministros", ["iberdrola", "endesa", "naturgy", "repsol luz", "totalenergies", "holaluz", "octopus", "canal de isabel", "consorcio de aguas", "aguas de", "gas natural", "electricidad"]], ["FIJO", "telecom", ["movistar", "telefonica", "vodafone", "orange", "digi", "pepephone", "jazztel", "masmovil", "yoigo", "simyo", "lowi", "euskaltel", "o2 ", "finetwork"]], ["FIJO", "seguros", ["seguro", "mapfre", "mutua", "allianz", "axa", "generali", "linea directa", "sanitas", "adeslas", "dkv", "caser", "reale"]], ["FIJO", "suscripciones", ["netflix", "spotify", "hbo", "max.com", "disney", "prime video", "amazon prime", "dazn", "movistar plus", "filmin", "apple.com/bill", "icloud", "google storage", "google one", "youtube premium", "chatgpt", "openai", "suscripcion"]], ["FIJO", "deporte", ["gimnasio", "gym", "basic-fit", "basicfit", "anytime fitness", "mcfit", "fitness park", "kirol", "polideportivo"]], ["FIJO", "educacion", ["matricula", "colegio", "guarderia", "academia", "autoescuela", "universidad"]], ["FIJO", "prestamos", ["prestamo", "financiacion", "cofidis", "cetelem", "aplazame"]], ["FIJO", "otros", ["cuota", "impuesto vehic"]], ["PUNTUAL", "salud", ["dentista", "dental", "clinica", "hospital", "medico", "optica", "fisioterap", "psicolog", "veterinari"]], ["PUNTUAL", "vehiculo", ["taller", "reparacion", "itv", "neumatic", "chapa", "recambios"]], ["PUNTUAL", "hogar", ["ferreteria", "leroy merlin", "ikea", "bricomart", "bricodepot", "conforama", "electrodomestico"]], ["PUNTUAL", "tramites", ["multa", "sancion", "tasa", "notaria", "abogado", "gestoria", "hacienda", "aeat", "dgt"]], ["VARIABLE", "supermercado", ["mercadona", "carrefour", "lidl", "eroski", "aldi", "alcampo", "auchan", "consum", "bm supermerc", "bm ", "supermercados dia", "dia retail", "hipercor", "el corte ingles super", "caprabo", "condis", "bonpreu", "gadis", "froiz", "simply", "ahorramas", "masymas", "spar", "supermerc", "frutas", "carniceria", "panaderia", "fruteria", "pescaderia"]], ["VARIABLE", "combustible", ["gasolin", "estacion de servicio", "e.s. ", "repsol", "cepsa", "moeve", "galp", "bp ", "shell", "petronor", "ballenoil", "plenoil", "avia "]], ["VARIABLE", "farmacia", ["farmacia", "parafarmacia"]], ["VARIABLE", "transporte", ["renfe", "metro bilbao", "metro de", "bizkaibus", "bilbobus", "euskotren", "dbus", "tmb", "emt ", "alsa", "taxi", "cabify", "uber ", "bolt", "parking", "aparcamiento", "peaje", "autopista", "ota ", "barik", "recarga transporte"]], ["VARIABLE", "efectivo", ["cajero", "reintegro", "retirada efectivo"]], ["CAPRICHO", "comida", ["restaurante", "rest.", "bar ", "taberna", "cafeteria", "cafe ", "pizzeria", "burger", "mcdonald", "kfc", "telepizza", "domino", "foster", "goiko", "vips", "glovo", "just eat", "uber eats", "deliveroo", "cervec", "sidreria", "asador", "sushi", "kebab", "heladeria", "pasteleria", "starbucks", "tapas", "pinte"]], ["CAPRICHO", "ocio", ["cine", "yelmo", "cinesa", "kinepolis", "teatro", "ticketmaster", "entradas", "concierto", "museo", "pub ", "discoteca", "steam", "playstation", "xbox", "nintendo", "epic games", "bolera", "escape room", "festival", "loteria", "apuestas"]], ["CAPRICHO", "ropa", ["zara", "primark", "h&m", "hm ", "pull&bear", "bershka", "stradivarius", "mango", "decathlon", "jd sports", "foot locker", "nike", "adidas", "sprinter", "zalando", "vinted", "shein", "lefties", "massimo dutti", "springfield"]], ["CAPRICHO", "compras", ["el corte ingles", "amazon", "amzn", "aliexpress", "temu", "ebay", "wallapop", "game ", "fnac", "media markt", "mediamarkt", "pccomponentes", "apple store", "xiaomi", "tiger", "action "]], ["CAPRICHO", "viajes", ["booking", "airbnb", "ryanair", "vueling", "iberia", "volotea", "hotel", "viaje", "edreams", "skyscanner", "hostel"]], ["CAPRICHO", "belleza", ["peluqueria", "barberia", "perfumeria", "druni", "sephora", "primor", "estetica", "manicura"]], ["CAPRICHO", "regalos", ["regalo", "floristeria", "flores"]]];
 
 // ---------- Importar extracto del banco ----------
 // Excel (.xlsx/.xls) con SheetJS, que solo se descarga al importar. CSV y tablas HTML con el lector propio,
@@ -833,26 +919,26 @@ function clavesMov(movs){
 }
 
 // ---------- Clasificación (mismas reglas que la versión Android) ----------
-const GENERICAS=new Set(KW.GENERICAS);
+const nombreSub=(t,sub)=>{const l=SUBCAT[t]||[];const x=l.find(v=>v[0]===(sub||'otros'))||l[l.length-1];return x?x[1]:''};
+const GENERICAS=new Set(['compra','compras','tarjeta','tarj','pago','pagos','en','con','de','del','la','el','los','las','a','y','recibo','adeudo','cargo','transferencia','transf','bizum','enviado','recibido','contactless','movil','apple','pay','google','debito','credito','operacion','num','ref','fecha','visa','mastercard','es','esp','sl','sa']);
 const claveComercio=d=>normalizar(d).replace(/[^a-z ]/g,' ').split(' ').filter(w=>w.length>1&&!GENERICAS.has(w)).slice(0,2).join(' ');
-function sugerirTipo(desc,imp){
-  const k=claveComercio(desc);
-  if(k&&S.aprendidas&&k in S.aprendidas)return S.aprendidas[k]==='IGNORAR'?null:S.aprendidas[k];
-  const d=' '+normalizar(desc).replace(/\s+/g,' ')+' ',hay=l=>l.some(w=>d.includes(w));
-  if(hay(KW.IGNORAR))return null;
-  if(imp>0)return 'INGRESO';
-  if(hay(KW.FIJO))return 'FIJO';
-  if(hay(KW.PUNTUAL))return 'PUNTUAL';
-  if(hay(KW.VARIABLE))return 'VARIABLE';
-  return 'CAPRICHO';
-}
-function esSeguro(desc,imp){
-  const k=claveComercio(desc);
-  if(k&&S.aprendidas&&k in S.aprendidas)return true;
-  if(imp>0)return true;
+function reglaPara(desc,imp){
   const d=' '+normalizar(desc).replace(/\s+/g,' ')+' ';
-  return [].concat(KW.IGNORAR,KW.FIJO,KW.PUNTUAL,KW.VARIABLE,KW.CAPRICHO).some(w=>d.includes(w));
+  return REGLAS.find(([t,,pal])=>(t==='IGNORAR'||(t==='INGRESO')===(imp>0))&&pal.some(w=>d.includes(w)))||null;
 }
+// Correcciones guardadas: "TIPO|sub", "TIPO" (versiones antiguas) o "IGNORAR"
+function aprendida(k){
+  const v=APR[k];if(v==null)return null;
+  if(v==='IGNORAR')return {tipo:null,sub:null};
+  const [t,sb]=String(v).split('|');return TIPOG[t]?{tipo:t,sub:sb||null}:null;
+}
+function sugerir(desc,imp){
+  const k=claveComercio(desc),a=k?aprendida(k):null;if(a)return a;
+  const r=reglaPara(desc,imp);
+  if(r)return r[0]==='IGNORAR'?{tipo:null,sub:null}:{tipo:r[0],sub:r[1]};
+  return imp>0?{tipo:'INGRESO',sub:'otros'}:{tipo:'CAPRICHO',sub:'otros'};
+}
+function esSeguro(desc,imp){const k=claveComercio(desc);return !!((k&&aprendida(k))||reglaPara(desc,imp))}
 
 // ---------- Pantalla de revisión ----------
 let IMP=null;
@@ -862,8 +948,8 @@ async function importarArchivo(archivo){
     const {movs,avisos}=interpretar(await leerExtracto(await archivo.arrayBuffer()));
     const ya=new Set(S.gastos.map(g=>g.clave).filter(Boolean));
     const claves=clavesMov(movs);
-    const filas=movs.map((m,i)=>{const t=sugerirTipo(m.descripcion,m.importe);
-      return {id:i,mov:m,clave:claves[i],sugerido:t,tipo:t,dudoso:!esSeguro(m.descripcion,m.importe),dup:ya.has(claves[i])}})
+    const filas=movs.map((m,i)=>{const sg=sugerir(m.descripcion,m.importe);
+      return {id:i,mov:m,clave:claves[i],sugerido:sg,tipo:sg.tipo,sub:sg.sub,dudoso:!esSeguro(m.descripcion,m.importe),dup:ya.has(claves[i])}})
       .sort((a,b)=>b.mov.fecha.localeCompare(a.mov.fecha));
     IMP={filas,avisos,error:filas.length?null:(avisos[0]||'No he encontrado movimientos.')};
   }catch(e){
@@ -883,7 +969,9 @@ function hojaImport(){
   const ing=sel.filter(f=>f.tipo==='INGRESO').reduce((a,f)=>a+f.mov.importe,0);
   const gas=sel.filter(f=>f.tipo!=='INGRESO').reduce((a,f)=>a+Math.abs(f.mov.importe),0);
   const dudosos=nuevas.filter(f=>f.dudoso&&f.tipo).length,dups=IMP.filas.length-nuevas.length;
-  const opciones=t=>Object.keys(TIPOG).map(k=>`<option value="${k}"${k===t?' selected':''}>${TIPOG[k]}</option>`).join('')+`<option value="IGNORAR"${!t?' selected':''}>Ignorar</option>`;
+  // Un desplegable con cada tipo como grupo y sus subcategorías dentro
+  const opciones=(t,sb)=>Object.keys(TIPOG).map(k=>`<optgroup label="${TIPOG[k]}">`+SUBCAT[k].map(([id,n])=>`<option value="${k}|${id}"${k===t&&(sb||'otros')===id?' selected':''}>${TIPOG[k]} · ${n}</option>`).join('')+'</optgroup>').join('')
+    +`<option value="IGNORAR"${!t?' selected':''}>Ignorar (no importar)</option>`;
   abrir(`<h2>Importar extracto</h2>
     <div class="card" style="margin-top:0;background:var(--bg)">
       <b>${IMP.filas.length} movimientos en el archivo</b>
@@ -899,7 +987,7 @@ function hojaImport(){
       <div class="t"><b>${esc(f.mov.descripcion)}</b><span class="muted">${fmtFecha(f.mov.fecha)}</span></div>
       <span class="amt"${f.mov.importe>0?' style="color:var(--teal)"':''}>${f.mov.importe>0?'+':''}${E(f.mov.importe)}</span>
       ${f.dup?'<span class="muted" style="flex-basis:100%">Ya importado: se omite</span>'
-        :`<select class="f" data-imp="${f.id}" aria-label="Tipo">${opciones(f.tipo)}</select>${f.dudoso&&f.tipo?'<span class="dudoso">¿Seguro? Revísalo</span>':''}`}
+        :`<select class="f" data-imp="${f.id}" aria-label="Tipo y subcategoría">${opciones(f.tipo,f.sub)}</select>${f.dudoso&&f.tipo?'<span class="dudoso">¿Seguro? Revísalo</span>':''}`}
     </div>`).join('')}
     <div class="pie"><button class="btn ghost" data-a="cerrarImp">Cancelar</button><button class="btn" data-a="confirmarImp"${sel.length&&!IMP.ia?'':' disabled'}>Añadir ${sel.length}</button></div>`);
   $('sheet').scrollTop=scroll;
@@ -913,25 +1001,38 @@ async function clasificarImportIA(){
   if(!obj.length)return;
   IMP.ia=true;IMP.msgIA=null;hojaImport();
   try{
-    for(let i=0;i<obj.length;i+=80){
-      const lote=obj.slice(i,i+80);
+    for(let i=0;i<obj.length;i+=60){
+      const lote=obj.slice(i,i+60);
       const lista=lote.map((f,j)=>`${j+1}. ${f.mov.descripcion.slice(0,120)} | ${f.mov.importe<0?'sale':'entra'} ${Math.abs(f.mov.importe).toFixed(2)} €`).join('\n');
-      const prompt=`Clasifica cada movimiento bancario de una persona en España en UNA de estas categorías:
+      const catalogo=Object.keys(SUBCAT).map(t=>`- ${t}: `+SUBCAT[t].map(([id,n])=>`${id} (${n})`).join(', ')).join('\n');
+      const prompt=`Clasifica cada movimiento bancario de una persona en España con un TIPO y una SUBCATEGORÍA.
+Identifica el comercio o la empresa que aparece en la descripción y usa lo que sepas de ella
+(por ejemplo: "GOIKO" es una hamburguesería → CAPRICHO/comida; "DECATHLON" vende ropa y material deportivo → CAPRICHO/ropa).
+
+Tipos:
 - INGRESO: dinero que entra (nómina, Bizum recibido, devoluciones...).
-- FIJO: pagos recurrentes de importe parecido: alquiler, hipoteca, luz, agua, gas, móvil, internet, seguros, suscripciones, gimnasio, cuotas.
-- VARIABLE: gastos necesarios del día a día con importe variable: supermercado, gasolina, transporte, farmacia, parking.
-- CAPRICHO: gastos prescindibles: restaurantes, bares, comida a domicilio, ropa, compras online, ocio, viajes, videojuegos.
-- PUNTUAL: gastos necesarios que no se repiten: médico, dentista, reparaciones, multas, tasas, matrícula, muebles.
-- IGNORAR: traspasos entre cuentas propias o pagos de la tarjeta de crédito desde la cuenta.
-Responde SOLO con JSON con la forma {"tipos":["...", ...]} con exactamente ${lote.length} elementos, en el mismo orden.
+- FIJO: pagos recurrentes de importe parecido: alquiler, luz, móvil, seguros, suscripciones, gimnasio, cuotas.
+- VARIABLE: gastos necesarios del día a día con importe variable: supermercado, gasolina, transporte, farmacia.
+- CAPRICHO: gastos prescindibles: restaurantes, bares, comida a domicilio, ocio, ropa, compras, viajes.
+- PUNTUAL: gastos necesarios que no se repiten: médico, reparaciones, multas, tasas, muebles.
+- IGNORAR: traspasos entre cuentas propias o pagos de la tarjeta de crédito desde la cuenta (sin subcategoría).
+
+Subcategorías válidas por tipo (usa el id, "otros" si ninguna encaja):
+${catalogo}
+
+Responde SOLO con JSON con la forma {"r":[{"t":"TIPO","s":"subcategoria"}, ...]} con exactamente ${lote.length} elementos, en el mismo orden.
 
 Movimientos:
 ${lista}`;
       const texto=await geminiTexto(prompt);
       const m=texto.match(/\{[\s\S]*\}/);
-      const tipos=m?(JSON.parse(m[0]).tipos||[]):[];
-      lote.forEach((f,j)=>{const t=String(tipos[j]||'').trim().toUpperCase();
-        f.tipo=t==='IGNORAR'?null:(TIPOG[t]?t:f.tipo);f.dudoso=false});
+      const r=m?(JSON.parse(m[0]).r||[]):[];
+      lote.forEach((f,j)=>{
+        const o=r[j]||{},t=String(o.t||'').trim().toUpperCase(),sb=String(o.s||'').trim().toLowerCase();
+        if(t==='IGNORAR'){f.tipo=null;f.sub=null}
+        else if(TIPOG[t]){f.tipo=t;f.sub=SUBCAT[t].some(v=>v[0]===sb)?sb:'otros'}
+        f.dudoso=false;
+      });
     }
     IMP.msgIA=`Gemini ha clasificado ${obj.length} movimientos. Revísalos antes de importar.`;
   }catch(e){IMP.msgIA=e.message||'No se pudo clasificar con IA.'}
@@ -959,13 +1060,160 @@ async function geminiTexto(prompt){
 function confirmarImport(){
   const sel=aImportar();if(!sel.length)return;
   const base=Date.now()*1000;
-  sel.forEach((f,i)=>S.gastos.push({id:base+i,descripcion:f.mov.descripcion,importe:Math.abs(f.mov.importe),fecha:f.mov.fecha,tipo:f.tipo,clave:f.clave}));
-  S.aprendidas=S.aprendidas||{};
-  IMP.filas.filter(f=>!f.dup&&f.tipo!==f.sugerido).forEach(f=>{const k=claveComercio(f.mov.descripcion);if(k)S.aprendidas[k]=f.tipo||'IGNORAR'});
+  sel.forEach((f,i)=>S.gastos.push({id:base+i,descripcion:f.mov.descripcion,importe:Math.abs(f.mov.importe),fecha:f.mov.fecha,tipo:f.tipo,subcategoria:f.sub||null,clave:f.clave}));
+  IMP.filas.filter(f=>!f.dup&&(f.tipo!==f.sugerido.tipo||(f.sub||null)!==(f.sugerido.sub||null))).forEach(f=>{
+    const k=claveComercio(f.mov.descripcion);if(k)APR[k]=f.tipo?f.tipo+'|'+(f.sub||''):'IGNORAR';
+  });
+  escribirJSON(KEY_APR,APR);
   save();IMP=null;cerrar();render();ir('registro');toast(`Se han añadido ${sel.length} movimientos del extracto`,false);
 }
 
-function render(){renderResumen();renderListas();renderInversion()}
+
+// ---------- Cuentas ----------
+const COLORES_CUENTA=['#1E7A46','#0E7C86','#2F5DA8','#7A4FA0','#B0541E','#A87A0C','#555F58'];
+const TIPOS_CUENTA={CORRIENTE:'Cuenta corriente',AHORRO:'Cuenta de ahorro',TARJETA:'Tarjeta',EFECTIVO:'Efectivo',OTRA:'Otra'};
+const colorCuenta=c=>COLORES_CUENTA[((c.color||0)%COLORES_CUENTA.length+COLORES_CUENTA.length)%COLORES_CUENTA.length];
+const detalleCuenta=c=>[c.banco,TIPOS_CUENTA[c.tipo]||'',c.ultimos4?'•••• '+c.ultimos4:''].filter(Boolean).join(' · ');
+let CUENTA_EDIT=null;
+
+function mostrarCuentas(){
+  const ultima=+(localStorage.getItem(KEY_ULTIMA)||1);
+  $('listaCuentas').innerHTML=CUENTAS.map(c=>`<div style="display:flex;align-items:center;gap:6px"><button class="cuentaitem" data-cuenta="${c.id}">
+      <span class="bola" style="background:${colorCuenta(c)}">${esc((c.nombre.trim()[0]||'€').toUpperCase())}</span>
+      <span class="t"><b>${esc(c.nombre)}</b><span class="muted">${esc(detalleCuenta(c))}</span>${c.id===ultima?'<span class="muted" style="display:block;color:var(--teal);font-weight:600">Última que abriste</span>':''}</span>
+    </button><button class="editar" data-editcuenta="${c.id}" aria-label="Editar ${esc(c.nombre)}">Editar</button></div>`).join('');
+  $('pantallaCuentas').classList.add('on');
+  $('tabs').style.display='none';$('fab').classList.remove('on');$('askbar').classList.remove('on');
+}
+function abrirCuenta(id){
+  cargarCuenta(id);IMP=null;GSEL=null;
+  $('pantallaCuentas').classList.remove('on');$('tabs').style.display='';
+  const c=CUENTAS.find(x=>x.id===id);
+  $('cuentaChip').innerHTML=c?`<i style="background:${colorCuenta(c)}"></i>${esc(c.nombre)}${c.ultimos4?' · '+esc(c.ultimos4):''} ▾`:'';
+  render();ir('resumen');
+}
+function hojaCuenta(c){
+  CUENTA_EDIT={id:c?c.id:null,color:c?c.color||0:0};
+  abrir(`<h2>${c?'Editar cuenta':'Nueva cuenta'}</h2>
+    <label for="cNom">Nombre (p. ej. «Nómina», «Ahorro»)</label><input class="f" id="cNom" value="${c?esc(c.nombre):''}" autocomplete="off">
+    <label for="cBanco">Banco (opcional)</label><input class="f" id="cBanco" value="${c?esc(c.banco||''):''}" autocomplete="off">
+    <label for="cTipo">Tipo</label><select class="f" id="cTipo">${Object.entries(TIPOS_CUENTA).map(([k,v])=>`<option value="${k}"${(c?c.tipo:'CORRIENTE')===k?' selected':''}>${v}</option>`).join('')}</select>
+    <label for="c4">Últimos 4 dígitos (opcional)</label><input class="f" id="c4" inputmode="numeric" maxlength="4" value="${c?esc(c.ultimos4||''):''}" autocomplete="off">
+    <p class="muted" style="margin:4px 0 0">Solo para distinguirla. No pongas el número completo.</p>
+    <label>Color</label><div class="colores" id="cColores">${COLORES_CUENTA.map((col,i)=>`<button style="background:${col}" data-color="${i}" class="${i===CUENTA_EDIT.color?'on':''}" aria-label="Color ${i+1}"></button>`).join('')}</div>
+    <div class="acts">${c&&CUENTAS.length>1?'<button class="btn danger" data-a="borrarCuenta">Borrar cuenta</button>':''}<span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="guardarCuenta">Guardar</button></div>`);
+}
+function guardarCuenta(){
+  const nombre=$('cNom').value.trim();if(!nombre){$('cNom').focus();return}
+  const c={id:CUENTA_EDIT.id??Math.max(Date.now(),...CUENTAS.map(x=>x.id+1)),nombre,banco:$('cBanco').value.trim(),
+    tipo:$('cTipo').value,ultimos4:$('c4').value.replace(/\D/g,'').slice(0,4),color:CUENTA_EDIT.color};
+  const i=CUENTAS.findIndex(x=>x.id===c.id);if(i>=0)CUENTAS[i]=c;else CUENTAS.push(c);
+  escribirJSON(KEY_CUENTAS,CUENTAS);cerrar();
+  if($('pantallaCuentas').classList.contains('on'))mostrarCuentas();else abrirCuenta(CUENTA);
+}
+function pedirBorrarCuenta(){
+  const c=CUENTAS.find(x=>x.id===CUENTA_EDIT.id);if(!c)return;
+  abrir(`<h2>¿Borrar «${esc(c.nombre)}»?</h2><p>Se borrarán todos sus ingresos, gastos, movimientos y derechos de cobro. No se puede deshacer.</p>
+    <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="borrarCuentaSi" style="background:var(--rojo)">Borrar</button></div>`);
+}
+function borrarCuenta(){
+  const id=CUENTA_EDIT.id;CUENTAS=CUENTAS.filter(x=>x.id!==id);escribirJSON(KEY_CUENTAS,CUENTAS);
+  try{localStorage.removeItem(claveCuenta(id))}catch(e){}
+  cerrar();if(CUENTA===id)CUENTA=null;mostrarCuentas();toast('Cuenta borrada',false);
+}
+
+// ---------- Gráficos circulares ----------
+const COLOR_TIPO={FIJO:'var(--c-fijo)',VARIABLE:'var(--c-variable)',CAPRICHO:'var(--c-capricho)',PUNTUAL:'var(--c-puntual)'};
+const PALETA_SUB=['#1E7A46','#D4A72C','#2F7D9A','#C0583A','#7A5BA6','#8FBF5A','#E08E3C','#B04A72','#5F6B63'];
+let GSEL=null;
+function reparto(tipo){
+  const [ini,fin]=rango(periodo,new Date()),a=iso(ini),b=iso(fin);
+  const del=netos(S.gastos).filter(g=>g.fecha>=a&&g.fecha<=b&&g.tipo!=='INGRESO'&&(!tipo||g.tipo===tipo)),acc={};
+  del.forEach(g=>{const k=tipo?(g.subcategoria||'otros'):g.tipo;acc[k]=(acc[k]||0)+g.importe});
+  return Object.entries(acc).filter(([,v])=>v>0.005).map(([k,v])=>({clave:k,nombre:tipo?nombreSub(tipo,k):TIPOG[k],importe:v})).sort((x,y)=>y.importe-x.importe);
+}
+function donut(porciones,colores,centro,sub){
+  const total=porciones.reduce((a,p)=>a+p.importe,0),R=70,C=2*Math.PI*R,hueco=porciones.length>1?2:0;
+  let off=0;
+  const arcos=porciones.map((p,i)=>{const len=p.importe/total*C;
+    const c=`<circle r="${R}" cx="100" cy="100" fill="none" style="stroke:${colores[i%colores.length]}" stroke-width="34" stroke-dasharray="${Math.max(len-hueco,0.8)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 100 100)"/>`;
+    off+=len;return c}).join('');
+  return `<div class="donut" role="img" aria-label="${esc(porciones.map(p=>p.nombre+' '+Math.round(p.importe/total*100)+' %').join(', '))}"><svg viewBox="0 0 200 200">${arcos}</svg><div class="c"><b>${E(total)}</b><span class="muted">${esc(sub)}</span></div></div>`;
+}
+function renderGraficos(){
+  const P=PER[periodo],porTipo=reparto(null),tipos=porTipo.map(p=>p.clave);
+  if(GSEL&&!tipos.includes(GSEL))GSEL=null;
+  let h=`<h2>¿En qué se va tu dinero ${P.este}?</h2>`;
+  if(!porTipo.length){$('graf').innerHTML=h+`<p class="muted" style="margin:0">Cuando apuntes o importes gastos de ${P.este}, aquí verás en qué se reparten.</p>`;return}
+  h+=`<div class="chips"><button class="chip${!GSEL?' on':''}" data-gsel="">Todo</button>${tipos.map(t=>`<button class="chip${GSEL===t?' on':''}" data-gsel="${t}">${TIPOG[t]}</button>`).join('')}</div>`;
+  const por=GSEL?reparto(GSEL):porTipo,col=GSEL?PALETA_SUB:por.map(p=>COLOR_TIPO[p.clave]),total=por.reduce((a,p)=>a+p.importe,0);
+  h+=donut(por,col,E(total),GSEL?'en '+TIPOG[GSEL]:'gastado');
+  h+=por.map((p,i)=>{const dentro=`<i style="background:${col[i%col.length]}"></i><span class="t">${esc(p.nombre)}${GSEL?'':'  ›'}</span><span class="p">${Math.round(p.importe/total*100)} %</span><span class="n" style="text-align:right">${E(p.importe)}</span>`;
+    return GSEL?`<div class="ley">${dentro}</div>`:`<button class="ley" data-gsel="${p.clave}">${dentro}</button>`}).join('');
+  h+=`<p class="muted" style="margin:8px 0 0;font-size:13px">${GSEL?'Gasto real: ya descontado lo que te han devuelto (ingresos atribuidos).':'Toca una categoría para ver en qué subcategorías se reparte.'}</p>`;
+  $('graf').innerHTML=h;
+}
+
+// ---------- Derechos de cobro ----------
+let DER_EDIT=null;
+function renderDerechosCard(){
+  const pend=(S.derechos||[]).filter(d=>!d.cobrado);
+  $('derechosCard').innerHTML=`<h2>Te deben</h2>`+(pend.length
+    ?`<div style="font-size:28px;font-weight:800">${E(pend.reduce((a,d)=>a+d.importe,0))}</div><p class="muted" style="margin:2px 0 0">${pend.length} ${pend.length===1?'derecho de cobro pendiente':'derechos de cobro pendientes'}</p>`
+    :'<p class="muted" style="margin:0">Apunta aquí el dinero que te deben: lo que adelantaste a un amigo, gastos que te paga la empresa, una fianza…</p>')
+    +`<div class="acts" style="margin-top:12px"><button class="btn ghost" data-a="derechos">${(S.derechos||[]).length?'Ver derechos de cobro':'Apuntar un derecho de cobro'}</button></div>`;
+}
+function hojaDerechos(){
+  const ds=S.derechos||[],pend=ds.filter(d=>!d.cobrado).sort((a,b)=>a.fecha.localeCompare(b.fecha)),cob=ds.filter(d=>d.cobrado).sort((a,b)=>(b.fechaCobro||b.fecha).localeCompare(a.fechaCobro||a.fecha));
+  const fila=(d,accion)=>{const g=d.gastoId!=null?S.gastos.find(x=>x.id===d.gastoId):null;
+    return `<div class="derecho"><div class="fila"><div class="t"><b>${esc(d.concepto)}</b><div class="muted">${[d.deudor?esc(d.deudor):'',fmtFecha(d.fecha),d.fechaCobro?'cobrado el '+fmtFecha(d.fechaCobro):''].filter(Boolean).join(' · ')}</div>${g?`<div class="muted" style="color:var(--teal)">Por: ${esc(g.descripcion)}</div>`:''}</div><b style="white-space:nowrap">${E(d.importe)}</b></div>
+      <div class="acts" style="margin-top:8px">${accion}<span class="sp"></span><button class="btn ghost" data-dacc="editar" data-id="${d.id}">Editar</button><button class="btn danger" data-dacc="borrar" data-id="${d.id}">Borrar</button></div></div>`};
+  abrir(`<h2>Derechos de cobro</h2><p class="muted" style="margin-top:0">Dinero que te deben. Cuando lo cobres, márcalo y, si quieres, se apunta el ingreso. Si lo ligas a un gasto, ese ingreso se descuenta del gasto.</p>
+    ${!ds.length?'<p>Todavía no has apuntado ninguno.</p>':''}
+    ${pend.length?`<h3>Pendientes · ${E(pend.reduce((a,d)=>a+d.importe,0))}</h3>`+pend.map(d=>fila(d,`<button class="btn" data-dacc="cobrar" data-id="${d.id}">Cobrado</button>`)).join(''):''}
+    ${cob.length?'<h3>Cobrados</h3>'+cob.map(d=>fila(d,`<button class="btn ghost" data-dacc="deshacer" data-id="${d.id}">Deshacer</button>`)).join(''):''}
+    <div class="pie"><button class="btn ghost" data-a="cerrar">Cerrar</button><button class="btn" data-a="nuevoDerecho">+ Añadir</button></div>`);
+}
+function hojaDerecho(d){
+  DER_EDIT=d||null;
+  const gastos=S.gastos.filter(g=>g.tipo!=='INGRESO').sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,40);
+  if(d&&d.gastoId!=null&&!gastos.some(g=>g.id===d.gastoId)){const g=S.gastos.find(x=>x.id===d.gastoId);if(g)gastos.push(g)}
+  abrir(`<h2>${d?'Editar derecho de cobro':'Nuevo derecho de cobro'}</h2>
+    <label for="dCon">Concepto (p. ej. «Cena de cumpleaños»)</label><input class="f" id="dCon" value="${d?esc(d.concepto):''}" autocomplete="off">
+    <label for="dDeu">¿Quién te lo debe?</label><input class="f" id="dDeu" value="${d?esc(d.deudor||''):''}" autocomplete="off">
+    <label for="dImp">Importe (€)</label><input class="f" id="dImp" inputmode="decimal" value="${d?numTxt(d.importe):''}">
+    <label for="dFec">Fecha</label><input class="f" type="date" id="dFec" value="${d?d.fecha:iso(new Date())}">
+    <label for="dGasto">Gasto relacionado (opcional)</label><select class="f" id="dGasto"><option value="">Ninguno</option>${gastos.map(g=>`<option value="${g.id}"${d&&d.gastoId===g.id?' selected':''}>${fmtFecha(g.fecha)} · ${esc(g.descripcion)} · ${E(g.importe)}</option>`).join('')}</select>
+    <p class="muted">Si lo ligas a un gasto, al cobrarlo ese ingreso se descontará del gasto (por ejemplo, la cena que pagaste tú).</p>
+    <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="derechos">Cancelar</button><button class="btn" data-a="guardarDerecho">Guardar</button></div>`);
+}
+function guardarDerecho(){
+  const imp=num($('dImp').value),con=$('dCon').value.trim();
+  if(!con){$('dCon').focus();return}if(!(imp>0)){$('dImp').focus();return}
+  const gv=$('dGasto').value;
+  const d=Object.assign({},DER_EDIT||{cobrado:false,fechaCobro:null},{id:DER_EDIT?DER_EDIT.id:Date.now(),concepto:con,deudor:$('dDeu').value.trim(),importe:imp,fecha:$('dFec').value||iso(new Date()),gastoId:gv?+gv:null});
+  S.derechos=S.derechos||[];const i=S.derechos.findIndex(x=>x.id===d.id);if(i>=0)S.derechos[i]=d;else S.derechos.push(d);
+  save();render();hojaDerechos();
+}
+function accionDerecho(acc,id){
+  const d=(S.derechos||[]).find(x=>x.id===id);if(!d)return;
+  if(acc==='editar')return hojaDerecho(d);
+  if(acc==='borrar'){S.derechos=S.derechos.filter(x=>x.id!==id);save();render();return hojaDerechos()}
+  if(acc==='deshacer'){d.cobrado=false;d.fechaCobro=null;save();render();return hojaDerechos()}
+  if(acc==='cobrar'){DER_EDIT=d;abrir(`<h2>Has cobrado ${E(d.importe)}</h2>
+    <p>¿Lo apunto como ingreso en Registro${d.gastoId!=null?' (y se descuenta del gasto)':''}?</p>
+    <p class="muted">Si el Bizum o la transferencia va a venir en el extracto del banco, elige «No»: si no, se contaría dos veces. Luego podrás atribuirlo al gasto desde el propio gasto.</p>
+    <div class="acts"><button class="btn ghost" data-a="cobrarNo">No, vendrá en el extracto</button><span class="sp"></span><button class="btn" data-a="cobrarSi">Sí, apúntalo</button></div>`)}
+}
+function cobrar(registrar){
+  const d=DER_EDIT;if(!d)return;const hoy=iso(new Date());
+  d.cobrado=true;d.fechaCobro=hoy;
+  if(registrar){const existe=d.gastoId!=null&&S.gastos.some(g=>g.id===d.gastoId);
+    S.gastos.push({id:Date.now(),descripcion:'Cobro: '+d.concepto+(d.deudor?' ('+d.deudor+')':''),importe:d.importe,fecha:hoy,tipo:'INGRESO',subcategoria:'bizum',atribuidoA:existe?d.gastoId:null})}
+  DER_EDIT=null;save();render();hojaDerechos();toast(registrar?'Cobro apuntado':'Marcado como cobrado',false);
+}
+
+function render(){renderResumen();renderGraficos();renderDerechosCard();renderListas();renderInversion()}
 
 function ir(v){
   vista=v;
@@ -998,20 +1246,70 @@ function formConcepto(c,tipos){
 }
 
 function formGasto(g){
-  F={k:'g',id:g?g.id:Date.now(),tipo:g?g.tipo:'CAPRICHO'};
-  abrir(`<h2>${g?'Editar movimiento':'Apuntar movimiento'}</h2>`+chips(Object.keys(TIPOG),TIPOG)+'<p class="muted" id="fAyudaG"></p>'
+  F={k:'g',id:g?g.id:Date.now(),tipo:g?g.tipo:'CAPRICHO',sub:g?g.subcategoria||null:null,orig:g?g.tipo:null};
+  abrir(`<h2>${g?'Editar movimiento':'Apuntar movimiento'}</h2>`+chips(Object.keys(TIPOG),TIPOG)+'<p class="muted" id="fAyudaG"></p><label>Subcategoría</label><div class="chips" id="fSubs"></div>'
     +`<label for="fNom">¿En qué?</label><input class="f" id="fNom" value="${g?esc(g.descripcion):''}" autocomplete="off">
     <label for="fImp">Importe (€)</label><input class="f" id="fImp" inputmode="decimal" value="${g?numTxt(g.importe):''}">
-    <label for="fFecha">Fecha</label><input class="f" type="date" id="fFecha" value="${g?g.fecha:iso(new Date())}">`+botones(!!g));
+    <label for="fFecha">Fecha</label><input class="f" type="date" id="fFecha" value="${g?g.fecha:iso(new Date())}">
+    <div id="fAtr"></div>`+botones(!!g));
   validar();
 }
 
+// Sección «Lo que te han devuelto» (gasto) o «Atribuido a…» (ingreso) dentro del formulario
+function htmlAtribucion(){
+  if(!F||F.k!=='g')return '';
+  const g=S.gastos.find(x=>x.id===F.id);if(!g)return '';
+  if(g.tipo!=='INGRESO'&&F.tipo!=='INGRESO'){
+    const ings=S.gastos.filter(x=>x.tipo==='INGRESO'&&x.atribuidoA===g.id),dev=ings.reduce((a,x)=>a+x.importe,0);
+    const pend=(S.derechos||[]).filter(d=>!d.cobrado&&d.gastoId===g.id);
+    return `<h3>Lo que te han devuelto</h3>`
+      +(ings.length?ings.map(x=>`<div class="muted">• ${esc(x.descripcion)} · ${E(x.importe)}</div>`).join('')
+          +`<p style="margin:8px 0"><b>Gasto real: ${E(g.importe)} − ${E(dev)} = ${E(Math.max(0,g.importe-dev))}</b></p>`
+        :'<p class="muted" style="margin:0 0 8px">¿Pagaste tú y te lo devolvieron por Bizum? Atribuye esos ingresos a este gasto y contará solo lo que pagaste de verdad.</p>')
+      +pend.map(d=>`<div class="muted" style="color:var(--claret)">Pendiente de cobrar: ${E(d.importe)}${d.deudor?' ('+esc(d.deudor)+')':''}</div>`).join('')
+      +`<button class="btn ghost" data-a="atribuir" style="margin-top:8px">${ings.length?'Cambiar ingresos atribuidos':'Atribuir ingresos (Bizums…)'}</button>`;
+  }
+  if(g.tipo==='INGRESO'&&g.atribuidoA!=null){
+    const d=S.gastos.find(x=>x.id===g.atribuidoA);
+    if(d)return `<h3>Atribuido a un gasto</h3><p class="muted" style="margin:0">«${esc(d.descripcion)}» (${fmtFecha(d.fecha)}): no cuenta como ingreso, se descuenta de ese gasto.</p><button class="btn ghost" data-a="quitarAtr" style="margin-top:8px">Quitar la atribución</button>`;
+  }
+  return '';
+}
+
+function hojaAtribuir(gid){
+  const g=S.gastos.find(x=>x.id===gid);if(!g)return;
+  const dias=x=>Math.abs((new Date(x.fecha+'T12:00')-new Date(g.fecha+'T12:00'))/864e5);
+  const cand=S.gastos.filter(x=>x.tipo==='INGRESO'&&(x.atribuidoA==null||x.atribuidoA===gid)&&dias(x)<=120).sort((a,b)=>dias(a)-dias(b));
+  ATR={gid,sel:new Set(cand.filter(x=>x.atribuidoA===gid).map(x=>x.id))};
+  abrir(`<h2>¿Quién te devolvió parte?</h2><p style="margin:0"><b>${esc(g.descripcion)}</b> · ${E(g.importe)}</p>
+    <p class="muted">Marca los ingresos que corresponden a este gasto. Salen primero los de fechas más cercanas.</p>
+    ${cand.length?cand.map(x=>`<label class="atrfila"><input type="checkbox" data-atr="${x.id}"${ATR.sel.has(x.id)?' checked':''}><span class="t"><b>${esc(x.descripcion)}</b><span class="muted" style="display:block">${fmtFecha(x.fecha)}</span></span><span class="amt" style="color:var(--teal)">+${E(x.importe)}</span></label>`).join('')
+      :'<p>No hay ingresos libres cerca de esta fecha. Apunta el Bizum en Registro (tipo Ingreso) o importa el extracto, y vuelve aquí.</p>'}
+    <div id="atrTotal" style="margin-top:12px"></div>
+    <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="volverGasto">Cancelar</button><button class="btn" data-a="guardarAtr">Guardar</button></div>`);
+  totalAtr();
+}
+let ATR=null;
+function totalAtr(){
+  if(!ATR)return;const g=S.gastos.find(x=>x.id===ATR.gid);if(!g)return;
+  const dev=S.gastos.filter(x=>ATR.sel.has(x.id)).reduce((a,x)=>a+x.importe,0);
+  $('atrTotal').innerHTML=`<div class="row"><span>Pagaste</span><span class="n">${E(g.importe)}</span></div><div class="row"><span>Te han devuelto</span><span class="n">− ${E(dev)}</span></div><div class="row tot"><span>Gasto real</span><span class="n">${E(Math.max(0,g.importe-dev))}</span></div>`
+    +(dev>g.importe?'<p class="muted" style="color:var(--rojo)">Te han devuelto más de lo que pagaste: el gasto se quedará en 0 € y el resto no contará como ingreso.</p>':'');
+}
+function guardarAtribucion(){
+  if(!ATR)return;
+  S.gastos.forEach(x=>{if(x.tipo!=='INGRESO')return;if(ATR.sel.has(x.id))x.atribuidoA=ATR.gid;else if(x.atribuidoA===ATR.gid)x.atribuidoA=null});
+  save();render();const g=S.gastos.find(x=>x.id===ATR.gid);ATR=null;if(g)formGasto(g);
+}
+
 function validar(){
-  if(!F)return;
+  if(!F||!$('fImp'))return; // la hoja abierta no es el formulario de movimiento
   const imp=num($('fImp').value);
   const puntual=F.k==='c'&&F.tipo==='PUNTUAL';
   $('fOk').disabled=!($('fNom').value.trim()&&imp>0&&((F.k==='c'&&!puntual)||$('fFecha').value));
   if(F.k!=='c'){
+    $('fSubs').innerHTML=(SUBCAT[F.tipo]||[]).map(([id,n])=>`<button class="chip${(F.sub||'otros')===id?' on':''}" data-sub="${id}">${n}</button>`).join('');
+    $('fAtr').innerHTML=htmlAtribucion();
     $('fAyudaG').textContent={
       CAPRICHO:'Algo que te das porque quieres: ropa, cenas, ocio…',
       VARIABLE:'Parte de un gasto variable que ya tienes previsto (súper, gasolina…).',
@@ -1035,7 +1333,12 @@ function guardar(){
   const imp=num($('fImp').value),nom=$('fNom').value.trim();
   if(F.k==='c'&&F.tipo==='PUNTUAL')S.gastos.push({id:F.id,descripcion:nom,importe:imp,fecha:$('fFecha').value,tipo:'PUNTUAL'});
   else if(F.k==='c')upsert(S.conceptos,{id:F.id,nombre:nom,importe:imp,tipo:F.tipo,frecuencia:$('fFreq').value});
-  else{const prev=S.gastos.find(x=>x.id===F.id);upsert(S.gastos,Object.assign({},prev,{id:F.id,descripcion:nom,importe:imp,fecha:$('fFecha').value,tipo:F.tipo}))}
+  else{
+    const prev=S.gastos.find(x=>x.id===F.id);
+    const o=Object.assign({},prev,{id:F.id,descripcion:nom,importe:imp,fecha:$('fFecha').value,tipo:F.tipo,subcategoria:F.sub||null});
+    if(o.tipo!=='INGRESO')o.atribuidoA=null; // un ingreso que pasa a ser gasto deja de estar atribuido
+    upsert(S.gastos,o);
+  }
   save();cerrar();render();
 }
 
@@ -1109,11 +1412,17 @@ document.addEventListener('click',e=>{
   if(ds.mod){inv.mod=ds.mod;renderInversion();return}
   if(ds.per){inv.per=ds.per;renderInversion();return}
   if(ds.pla){inv.pla=ds.pla;renderInversion();return}
-  if(ds.p){periodo=ds.p;renderResumen();return}
+  if(ds.p){periodo=ds.p;renderResumen();renderGraficos();return}
   if(ds.v){ir(ds.v);return}
   if(ds.c){const c=S.conceptos.find(x=>String(x.id)===ds.c);if(c)formConcepto(c,c.tipo==='INGRESO'?['INGRESO']:['GASTO_FIJO','GASTO_VARIABLE']);return}
   if(ds.g){const g=S.gastos.find(x=>String(x.id)===ds.g);if(g)formGasto(g);return}
-  if(ds.t&&F){F.tipo=ds.t;document.querySelectorAll('#fTipos .chip').forEach(b=>b.classList.toggle('on',b===t));validar();return}
+  if(ds.cuenta){abrirCuenta(+ds.cuenta);return}
+  if(ds.editcuenta){hojaCuenta(CUENTAS.find(x=>x.id===+ds.editcuenta));return}
+  if(ds.color!=null&&CUENTA_EDIT){CUENTA_EDIT.color=+ds.color;document.querySelectorAll('#cColores button').forEach(b=>b.classList.toggle('on',b===t));return}
+  if(ds.gsel!=null){GSEL=ds.gsel||null;renderGraficos();return}
+  if(ds.dacc){accionDerecho(ds.dacc,+ds.id);return}
+  if(ds.sub&&F){F.sub=ds.sub;validar();return}
+  if(ds.t&&F){if(F.tipo!==ds.t)F.sub=null;F.tipo=ds.t;document.querySelectorAll('#fTipos .chip').forEach(b=>b.classList.toggle('on',b===t));validar();return}
   switch(t.id){
     case 'fab':
       if(vista==='ingresos')formConcepto(null,['INGRESO']);
@@ -1130,20 +1439,27 @@ document.addEventListener('click',e=>{
     case 'descargar':descargar();break;
     case 'hacerImp':hacerImportar();break;
     case 'reset':pedirReset();break;
-    case 'hacerReset':S={conceptos:[],gastos:[],ahorro:10,aprendidas:{}};save();cerrar();render();toast('Datos borrados',false);break;
+    case 'hacerReset':S=vacioS();save();cerrar();render();toast('Datos borrados',false);break;
     case 'undo':
       if(borrado){S[borrado.key].splice(borrado.i,0,borrado.item);borrado=null;save();render()}
       $('toast').classList.remove('on');break;
   }
 });
 const alCambiar=e=>{
+  if(e.type==='change'&&e.target.dataset&&e.target.dataset.atr!=null&&ATR){
+    const id=+e.target.dataset.atr;if(e.target.checked)ATR.sel.add(id);else ATR.sel.delete(id);totalAtr();return;
+  }
   if(e.type==='change'&&e.target.dataset&&e.target.dataset.imp!=null&&IMP&&IMP.filas){
     const f=IMP.filas.find(x=>x.id===+e.target.dataset.imp);
-    if(f){f.tipo=e.target.value==='IGNORAR'?null:e.target.value;f.dudoso=false;hojaImport()}
+    if(f){const [t,sb]=e.target.value.split('|');f.tipo=t==='IGNORAR'?null:t;f.sub=f.tipo?(sb||'otros'):null;f.dudoso=false;hojaImport()}
     return;
   }
   if(e.target.closest('#sheet'))validar();
 };
+// Intro envía la pregunta (Mayús+Intro hace salto de línea). isComposing evita enviar a mitad de una tilde o un dictado.
+$('pregunta').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();ACC.enviar()}
+});
 $('fileExtracto').addEventListener('change',e=>{const a=e.target.files&&e.target.files[0];if(a)importarArchivo(a)});
 document.addEventListener('input',alCambiar);
 document.addEventListener('change',alCambiar);
@@ -1152,7 +1468,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
 $('ahorro').addEventListener('input',e=>{S.ahorro=Number(e.target.value);save();renderResumen()});
 
 $('hoy').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-render();
+mostrarCuentas();
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 }
 </script>
