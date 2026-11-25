@@ -12,3 +12,21 @@ En el iPhone:
 3. Ábrela siempre desde el icono. Funciona sin conexión.
 
 Los datos se guardan en el propio iPhone. Usa "Exportar" de vez en cuando para tener una copia.
+
+ASESOR DE INVERSIÓN (pestaña Inversión)
+Necesita una clave gratuita de Gemini de cada usuario. Dentro de la app,
+el botón "¿Cómo consigo mi clave?" explica los pasos:
+1. Ir a https://aistudio.google.com/apikey con una cuenta de Google.
+2. Pulsar "Create API key" (no pide tarjeta) y copiar la clave.
+3. En la app: Inversión > Configurar > pegar la clave > Guardar.
+
+Usa el modelo gratuito gemini-3.5-flash-lite. Si está saturado, la app reintenta
+y prueba sola otros modelos gratuitos. Como los modelos gratuitos no buscan en
+Google, la página descarga antes los datos del momento de fuentes gratuitas:
+CoinGecko (Bitcoin, Ethereum, oro), Banco Central Europeo (tipos, inflación,
+euro/dólar) y GDELT (noticias). Los índices de bolsa (MSCI World, S&P 500...)
+no están disponibles desde el navegador; la versión Android sí los tiene.
+
+La clave se guarda solo en ese dispositivo. NO la escribas en ningún archivo
+de este repositorio: GitHub es público y alguien podría usarla.
+Nota: en la vista previa de Claude el asesor no funciona; usa la versión de GitHub Pages.

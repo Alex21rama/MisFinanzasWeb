@@ -78,7 +78,27 @@ textarea.f{min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:1
 .toast{position:fixed;z-index:20;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:12px;padding:8px 8px 8px 16px;border-radius:12px;background:var(--ink);color:var(--bg);width:max-content;max-width:calc(100% - 32px)}
 .toast.on{display:flex}
 .toast button{min-height:36px;border:0;background:none;color:var(--bg);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+h3{margin:18px 0 6px;font-size:17px;font-weight:800}
+.card.tip{border:2px solid var(--teal)}
+.big small{font-size:.4em;font-weight:600}
+.askbar.on~.toast{bottom:calc(150px + env(safe-area-inset-bottom))}
+.card.err{background:light-dark(#ffd0d8,#4a1a26)}
+.grupo{margin-top:12px}.grupo>span{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+.msg{margin-top:12px;padding:14px 16px;border-radius:16px;overflow-wrap:anywhere}
+.msg.u{margin-left:15%;background:var(--ink);color:var(--bg)}
+.msg.a{background:var(--card)}
+.fuentes{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:14px}
+.fuentes a{display:block;padding:4px 0;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cargando{display:flex;align-items:center;gap:12px;margin-top:14px;color:var(--mute)}
+.spin{flex:none;width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:gira 1s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.askbar{position:fixed;z-index:4;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));display:none;gap:8px;align-items:flex-end;padding:8px max(5vw,12px);background:var(--card);border-top:1px solid var(--line)}
+.askbar.on{display:flex}
+.askbar textarea{flex:1;min-height:44px;max-height:120px;resize:none;font-family:inherit;font-size:16px}
+.steps{padding-left:22px;margin:8px 0 14px}.steps li{margin:8px 0}
+.linkbtn{display:flex;align-items:center;justify-content:center;text-decoration:none}
+ul.notas{padding-left:20px;margin:6px 0}ul.notas li{margin:6px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:3s!important}}
 </style>
 </head>
 <body>
@@ -104,13 +124,35 @@ textarea.f{min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:1
   <section class="vista" id="v-ingresos"><div id="l-ingresos"></div></section>
   <section class="vista" id="v-gastos"><div id="l-gastos"></div></section>
   <section class="vista" id="v-registro"><div id="l-registro"></div></section>
+  <section class="vista" id="v-inversion">
+    <div class="hero"><div class="lbl">Tu ahorro para invertir</div><div class="big" id="invAhorro"></div><div id="invAhorroTxt"></div></div>
+    <div class="card tip" id="invSinClave">
+      <h2>Activa el asesor gratis</h2>
+      <p>Para analizar el mercado, el asesor necesita tu propia clave de Gemini. Es gratis, no pide tarjeta y se tarda un par de minutos.</p>
+      <div class="acts"><button class="btn" data-a="ayuda">Cómo conseguirla</button><button class="btn ghost" data-a="config">Ya la tengo</button></div>
+    </div>
+    <div class="card">
+      <h2>¿Cuánto quieres invertir?</h2>
+      <label for="invCant">Cantidad (€)</label><input class="f" id="invCant" inputmode="decimal" autocomplete="off">
+      <div class="grupo"><span>Modalidad</span><div class="chips" id="gMod"></div></div>
+      <div class="grupo"><span>Riesgo</span><div class="chips" id="gPer"></div><p class="muted" id="perTxt" style="margin:6px 0 0"></p></div>
+      <div class="grupo"><span>Plazo</span><div class="chips" id="gPla"></div></div>
+      <div class="acts"><button class="btn" data-a="analizar" id="btnAnalizar" style="flex:1">Analizar el mercado ahora</button></div>
+    </div>
+    <p class="muted">Información orientativa generada por IA con datos de internet. No es asesoramiento financiero: ninguna inversión garantiza rentabilidad.</p>
+    <div class="acts" style="margin-top:4px"><button class="btn ghost" data-a="config">Configurar</button><button class="btn ghost" data-a="ayuda">¿Cómo consigo mi clave?</button><button class="btn danger" data-a="nueva" id="btnNueva">Nueva conversación</button></div>
+    <div id="chat"></div>
+    <div style="height:90px"></div>
+  </section>
 </main>
 <button class="fab" id="fab" aria-label="Añadir">+</button>
+<div class="askbar" id="askbar"><textarea class="f" id="pregunta" rows="1" placeholder="Haz una pregunta…"></textarea><button class="btn" data-a="enviar" aria-label="Enviar">Enviar</button></div>
 <nav class="tabs">
   <button data-v="resumen" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Resumen</button>
   <button data-v="ingresos"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Ingresos</button>
   <button data-v="gastos"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11.5l2-8H6.2"/></svg>Gastos</button>
   <button data-v="registro"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Registro</button>
+  <button data-v="inversion"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>Inversión</button>
 </nav>
 <div class="modal" id="modal"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast"><span id="toastTxt"></span><button id="undo">Deshacer</button></div>
@@ -198,13 +240,305 @@ function renderListas(){
   $('l-registro').innerHTML=g.length?g.map(x=>`<button class="item" data-g="${x.id}"><span class="t"><b>${esc(x.descripcion)}</b><span class="muted">${fmtFecha(x.fecha)} · ${TIPOG[x.tipo]}</span></span><span class="amt">${E(x.importe)}</span></button>`).join(''):vacio('Apunta aquí lo que te gastas en caprichos y en gastos variables para saber cuánto te queda.');
 }
 
-function render(){renderResumen();renderListas()}
+// ---------- Asesor de inversión (Gemini gratis + datos de mercado descargados por la página) ----------
+const MODELO_DEF='gemini-3.5-flash-lite';
+// Si un modelo está saturado o sin cupo, se prueba con estos (todos gratis)
+const MODELOS_RESERVA=['gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-3.8-flash','gemini-3.6-flash'];
+const KEY_IA='misfinanzas-ia',KEY_CHAT='misfinanzas-chat';
+const MOD={MENSUAL:['Cada mes','como aportación mensual'],UNICA:['Una vez','de una sola vez']};
+const PERF={CONSERVADOR:['Conservador','no quiero perder dinero aunque gane poco'],MODERADO:['Moderado','acepto algunas caídas a cambio de más rentabilidad'],AGRESIVO:['Agresivo','acepto caídas fuertes buscando la máxima rentabilidad']};
+const PLA={CORTO:['< 1 año','menos de 1 año'],MEDIO:['1–5 años','entre 1 y 5 años'],LARGO:['> 5 años','más de 5 años']};
+let IA={clave:'',modelo:MODELO_DEF},CH=[];
+try{IA=Object.assign(IA,JSON.parse(localStorage.getItem(KEY_IA)||'{}'))}catch(e){}
+// gemini-2.5-flash era el modelo anterior; Google ya no lo da a claves nuevas
+if(!IA.modelo||IA.modelo==='gemini-2.5-flash')IA.modelo=MODELO_DEF;
+try{CH=JSON.parse(localStorage.getItem(KEY_CHAT)||'[]')}catch(e){}
+const saveIA=()=>{try{localStorage.setItem(KEY_IA,JSON.stringify(IA))}catch(e){}};
+const saveChat=()=>{try{localStorage.setItem(KEY_CHAT,JSON.stringify(CH))}catch(e){}};
+const inv={mod:'MENSUAL',per:'MODERADO',pla:'LARGO',cargando:false,error:null,pendiente:null};
+
+function formatear(t){
+  return esc(t).split('\n').map(l=>{const m=l.trim().match(/^#{1,6}\s+(.*)$/);return m?'**'+m[1]+'**':l}).join('\n')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+}
+
+function resumenFinanciero(){
+  const r=calcular('MES');
+  return `- Ingresos netos medios: ${E(r.ing)} al mes
+- Gastos fijos: ${E(r.fij)} al mes
+- Gastos variables estimados: ${E(r.vari)} al mes
+- Ahorro objetivo: ${S.ahorro} % = ${E(r.aho)} al mes (${E(r.aho*12)} al año)
+- Dinero para caprichos: ${E(r.cap)} al mes`;
+}
+
+function promptSistema(datos,conBusqueda){
+  const hoy=new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+  return `Eres el analista de inversiones de una app de finanzas personales para un usuario residente en España. Hoy es ${hoy}.
+
+Situación económica del usuario (datos de la app):
+${resumenFinanciero()}
+
+CÓMO TRABAJAS
+${conBusqueda?INSTR_BUSQUEDA:INSTR_SIN_BUSQUEDA}
+2. Cita las cifras con su fecha. No inventes datos: si no encuentras algo, dilo.
+3. Ten en cuenta la cantidad, si es aportación única o mensual, el perfil de riesgo y el horizonte que indique el usuario.
+   Si no tiene colchón de emergencia (3–6 meses de gastos), menciónalo antes de invertir en activos con riesgo.
+4. Compara las opciones razonables con: rentabilidad esperada (rango, no una cifra exacta), riesgo y peor caída histórica aproximada,
+   liquidez, comisiones, importe mínimo y fiscalidad en España.
+5. Termina con una propuesta concreta para ESA cantidad: cómo repartirla (en € y %), en qué tipo de producto y por qué,
+   y qué señales harían cambiar la recomendación.
+
+REGLAS
+- Nadie puede saber qué será lo más rentable: explica que la rentabilidad pasada no garantiza la futura y que más rentabilidad esperada implica más riesgo. Nunca prometas ganancias.
+- No recomiendes apalancamiento, derivados, CFD ni trading diario, salvo para desaconsejarlos.
+- Si falta el perfil o el plazo, asume perfil moderado y dilo.
+- Al final añade una línea breve recordando que es información orientativa generada por IA, no asesoramiento financiero regulado por la CNMV, y que la decisión es del usuario.
+
+FORMATO (se muestra en un móvil)
+- Español, frases cortas. Títulos de sección en **negrita** en su propia línea. Listas con guiones.
+- Sin tablas, sin encabezados con #, sin emojis.
+- Unas 350–600 palabras en el análisis principal, más breve en preguntas de seguimiento.${datos?'\n\n'+datos:''}`;
+}
+
+const INSTR_BUSQUEDA=`1. Antes de recomendar nada, usa la búsqueda de Google para obtener datos ACTUALES (de esta semana si es posible): tipos del BCE, Euríbor, Letras del Tesoro y depósitos en España, inflación, renta variable (MSCI World, S&P 500, Euro Stoxx 50, IBEX 35), bonos, oro, Bitcoin y Ethereum, y noticias macro recientes. Si el usuario pregunta por un activo o empresa concreta, búscalo también.`;
+
+const INSTR_SIN_BUSQUEDA=`1. No puedes buscar en internet. Basa el análisis en los DATOS DE MERCADO DESCARGADOS AHORA que aparecen al final (todos con su fecha y su fuente).
+   - Usa esas cifras tal cual y di de dónde salen.
+   - Para lo que no esté en los datos (por ejemplo, índices bursátiles, la rentabilidad exacta de un depósito o de las Letras, o una empresa concreta), usa los titulares si dan la cifra; si no, da solo un rango orientativo, dilo claramente y recomienda comprobarlo antes de invertir.
+   - Nunca inventes cifras concretas, fechas ni noticias. Si faltan datos importantes, dilo.`;
+
+// ---------- Datos de mercado (solo fuentes gratuitas que permiten acceso desde el navegador) ----------
+async function pedir(url,tipo,ms){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms||12000);
+  try{const r=await fetch(url,{signal:c.signal});if(!r.ok)return null;return tipo==='texto'?await r.text():await r.json()}
+  catch(e){return null}finally{clearTimeout(t)}
+}
+const n2=v=>Number(v).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pctTxt=v=>(v>=0?'+':'')+Number(v).toLocaleString('es-ES',{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+
+async function datosCripto(){
+  const j=await pedir('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&ids=bitcoin,ethereum,pax-gold&price_change_percentage=30d,1y');
+  if(!Array.isArray(j))return [];
+  const nombre={bitcoin:'Bitcoin',ethereum:'Ethereum','pax-gold':'Oro (PAX Gold, equivale a 1 onza de oro)'};
+  return j.filter(c=>c.current_price!=null).map(c=>{
+    let l=`${nombre[c.id]||c.name}: ${n2(c.current_price)} EUR`;
+    if(c.price_change_percentage_30d_in_currency!=null)l+=` · 1 mes: ${pctTxt(c.price_change_percentage_30d_in_currency)}`;
+    if(c.price_change_percentage_1y_in_currency!=null)l+=` · 1 año: ${pctTxt(c.price_change_percentage_1y_in_currency)}`;
+    if(c.ath)l+=` · respecto a su máximo histórico: ${pctTxt((c.current_price/c.ath-1)*100)}`;
+    return l;
+  });
+}
+
+async function datosDivisa(){
+  const j=await pedir('https://api.frankfurter.dev/v1/latest?base=EUR&symbols=USD')||await pedir('https://api.frankfurter.app/latest?from=EUR&to=USD');
+  return j&&j.rates&&j.rates.USD?[`Euro/dólar: ${n2(j.rates.USD)} USD por euro (BCE, ${j.date})`]:[];
+}
+
+const SERIES_BCE=[
+  ['Tipo de la facilidad de depósito del BCE','FM/D.U2.EUR.4F.KR.DFR.LEV'],
+  ['Euríbor a 12 meses (media mensual)','FM/M.U2.EUR.RT.MM.EURIBOR1YD_.HSTA'],
+  ['Inflación interanual España (IPCA)','ICP/M.ES.N.000000.4.ANR'],
+  ['Inflación interanual eurozona (IPCA)','ICP/M.U2.N.000000.4.ANR'],
+  ['Rentabilidad bono español a 10 años','IRS/M.ES.L.L40.CI.0000.EUR.N.Z']
+];
+async function serieBce(nombre,ruta){
+  const csv=await pedir(`https://data-api.ecb.europa.eu/service/data/${ruta}?lastNObservations=1&format=csvdata&detail=dataonly`,'texto');
+  if(!csv)return null;
+  const lineas=csv.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(lineas.length<2)return null;
+  const cab=lineas[0].replace(/^\uFEFF/,'').split(',').map(x=>x.replace(/"/g,''));
+  const val=lineas[lineas.length-1].split(',').map(x=>x.replace(/"/g,''));
+  const iF=cab.indexOf('TIME_PERIOD'),iV=cab.indexOf('OBS_VALUE');
+  const v=parseFloat(val[iV]);
+  return iF<0||iV<0||isNaN(v)?null:`${nombre}: ${n2(v)} % (dato de ${val[iF]})`;
+}
+
+async function noticias(consulta,max){
+  const q=encodeURIComponent(consulta+' sourcelang:spanish');
+  const j=await pedir(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q}&mode=artlist&format=json&timespan=7d&sort=datedesc&maxrecords=${max}`);
+  if(!j||!Array.isArray(j.articles))return [];
+  return j.articles.filter(a=>a.title&&a.url).map(a=>{
+    const d=String(a.seendate||'');const f=d.length>=8?`${d.slice(6,8)}/${d.slice(4,6)}/${d.slice(0,4)}`:'';
+    return {titulo:`${a.title}${a.domain?' — '+a.domain:''}${f?' ('+f+')':''}`,url:a.url};
+  });
+}
+
+async function datosMercado(preguntaConcreta){
+  const consulta=preguntaConcreta?preguntaConcreta.slice(0,100):'(bolsa OR mercados OR "Letras del Tesoro" OR depósitos OR inflación)';
+  const [cripto,divisa,bce,tit]=await Promise.all([
+    datosCripto(),datosDivisa(),
+    Promise.all(SERIES_BCE.map(([n,r])=>serieBce(n,r))).then(l=>l.filter(Boolean)),
+    noticias(consulta,8)
+  ]);
+  const ahora=new Date().toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'});
+  let t=`DATOS DE MERCADO DESCARGADOS AHORA (${ahora}, hora de España):`;
+  const cot=cripto.concat(divisa);
+  if(cot.length)t+='\nCotizaciones (CoinGecko y BCE):\n'+cot.map(l=>'- '+l).join('\n');
+  if(bce.length)t+='\nTipos de interés e inflación (Banco Central Europeo):\n'+bce.map(l=>'- '+l).join('\n');
+  if(tit.length)t+='\nTitulares recientes (GDELT, últimos 7 días):\n'+tit.map(n=>'- '+n.titulo).join('\n');
+  t+='\n(No hay datos de índices bursátiles como el MSCI World o el S&P 500: si los necesitas, dilo y usa rangos orientativos.)';
+  const fuentes=[];
+  if(cripto.length)fuentes.push({titulo:'CoinGecko (cripto y oro)',url:'https://www.coingecko.com/'});
+  if(divisa.length||bce.length)fuentes.push({titulo:'Banco Central Europeo (tipos, inflación y divisas)',url:'https://data.ecb.europa.eu/'});
+  tit.forEach(n=>fuentes.push(n));
+  return {texto:t,fuentes};
+}
+
+async function llamarGemini(hist,modelo,sistema,busqueda){
+  const cuerpo={
+    systemInstruction:{parts:[{text:sistema}]},
+    contents:hist.map(m=>({role:m.rol==='u'?'user':'model',parts:[{text:m.texto}]}))
+  };
+  if(busqueda)cuerpo.tools=[{google_search:{}}];
+  let r;
+  try{
+    r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`,
+      {method:'POST',headers:{'content-type':'application/json','x-goog-api-key':IA.clave},body:JSON.stringify(cuerpo)});
+  }catch(e){const err=new Error('No se pudo conectar. Revisa tu conexión a internet.');err.codigo=0;throw err}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){
+    const det=(j.error&&j.error.message)||'';
+    let msg=`Error ${r.status} de Gemini: ${det}`;
+    if(r.status===400&&/api key/i.test(det))msg='La clave de Gemini no es válida. Revísala en Configurar.';
+    else if(r.status===403)msg='La clave de Gemini no tiene permiso. Revísala en Configurar.';
+    else if(r.status===404)msg=`El modelo «${modelo}» no está disponible para tu clave. En Configurar, deja el modelo vacío para usar ${MODELO_DEF}.`;
+    else if(r.status===429)msg='Has llegado al límite gratuito de Gemini por ahora. Espera unos minutos (o hasta mañana) y pulsa Reintentar.';
+    else if(r.status>=500)msg='Los servidores de Gemini están saturados ahora mismo (es temporal y no depende de la app). Espera un par de minutos y pulsa Reintentar.';
+    const err=new Error(msg);err.codigo=r.status;throw err;
+  }
+  const c=(j.candidates||[])[0];
+  if(!c)throw new Error('Gemini no ha devuelto respuesta.');
+  const texto=((c.content&&c.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('').trim();
+  if(!texto)throw new Error('La respuesta llegó vacía. Prueba otra vez.');
+  const fuentes=[],vistos=new Set();
+  ((c.groundingMetadata&&c.groundingMetadata.groundingChunks)||[]).forEach(g=>{
+    const w=g.web;if(w&&w.uri&&!vistos.has(w.uri)){vistos.add(w.uri);fuentes.push({titulo:w.title||w.uri,url:w.uri})}
+  });
+  return {rol:'a',texto,fuentes};
+}
+
+const esperar=ms=>new Promise(res=>setTimeout(res,ms));
+
+// Saturado (5xx): un reintento y al siguiente modelo. Sin cupo o no disponible (429/404): siguiente modelo.
+async function preguntarGemini(hist,preguntaConcreta){
+  const datos=await datosMercado(preguntaConcreta);
+  const modelos=[...new Set([IA.modelo||MODELO_DEF].concat(MODELOS_RESERVA))];
+  let primerError=null;
+  for(const modelo of modelos){
+    const busqueda=modelo.startsWith('gemini-2.5');
+    const sistema=promptSistema(datos.texto,busqueda);
+    for(let intento=0;intento<2;intento++){
+      try{
+        const resp=await llamarGemini(hist,modelo,sistema,busqueda);
+        const vistos=new Set();
+        resp.fuentes=resp.fuentes.concat(datos.fuentes).filter(f=>!vistos.has(f.url)&&vistos.add(f.url));
+        return resp;
+      }catch(e){
+        if(!primerError||primerError.codigo===404)primerError=e;
+        if(e.codigo>=500){if(intento===0){await esperar(3000);continue}break}
+        if(e.codigo===404||e.codigo===429)break;
+        throw e;
+      }
+    }
+  }
+  throw primerError||new Error('No se pudo conectar con Gemini.');
+}
+
+async function preguntar(texto){
+  texto=String(texto||'').trim();
+  if(!texto||inv.cargando)return;
+  if(!IA.clave){inv.error='Primero necesitas tu clave gratis de Gemini.';inv.pendiente=texto;renderInversion();return}
+  const hist=CH.concat([{rol:'u',texto}]);
+  CH=hist;inv.cargando=true;inv.error=null;inv.pendiente=null;renderInversion(true);
+  try{
+    const resp=await preguntarGemini(hist,texto.startsWith('Quiero invertir')?null:texto);
+    CH=hist.concat([resp]);saveChat();
+  }catch(e){
+    CH=hist.slice(0,-1);inv.error=e.message||'Error desconocido.';inv.pendiente=texto;
+  }
+  inv.cargando=false;renderInversion(true);
+}
+
+function analizar(){
+  const cant=num($('invCant').value);
+  if(!(cant>0)){$('invCant').focus();return}
+  preguntar(`Quiero invertir ${E(cant)} ${MOD[inv.mod][1]}. Mi perfil de riesgo es ${PERF[inv.per][0].toLowerCase()} (${PERF[inv.per][1]}) y mi horizonte es de ${PLA[inv.pla][1]}. Haz un análisis completo del mercado ahora mismo y dime cuál es la mejor forma de invertir esta cantidad.`);
+}
+
+const chipsHTML=(obj,actual,attr)=>Object.entries(obj).map(([k,[t]])=>`<button class="chip${k===actual?' on':''}" data-${attr}="${k}">${t}</button>`).join('');
+
+function renderInversion(bajar){
+  const r=calcular('MES');
+  $('invAhorro').innerHTML=esc(E(r.aho))+'<small> al mes</small>';
+  $('invAhorroTxt').textContent=`${S.ahorro} % de tus ingresos · ${E(r.aho*12)} al año`;
+  if(!$('invCant').value&&r.aho>0)$('invCant').value=Math.round(r.aho);
+  $('invSinClave').style.display=IA.clave?'none':'';
+  $('gMod').innerHTML=chipsHTML(MOD,inv.mod,'mod');
+  $('gPer').innerHTML=chipsHTML(PERF,inv.per,'per');
+  $('gPla').innerHTML=chipsHTML(PLA,inv.pla,'pla');
+  $('perTxt').textContent=PERF[inv.per][1].replace(/^./,c=>c.toUpperCase());
+  $('btnAnalizar').disabled=inv.cargando;
+  $('btnNueva').style.display=CH.length&&!inv.cargando?'':'none';
+  $('chat').innerHTML=CH.map(m=>m.rol==='u'
+      ?`<div class="msg u">${esc(m.texto)}</div>`
+      :`<div class="msg a">${formatear(m.texto)}${(m.fuentes&&m.fuentes.length)?`<div class="fuentes"><b>Fuentes</b>${m.fuentes.slice(0,8).map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a>`).join('')}</div>`:''}</div>`).join('')
+    +(inv.cargando?'<div class="cargando"><span class="spin"></span><span>Descargando datos de mercado y analizando… puede tardar un minuto.</span></div>':'')
+    +(inv.error?`<div class="card err"><p style="margin:0">${esc(inv.error)}</p><div class="acts">${!IA.clave?'<button class="btn" data-a="ayuda">¿Cómo consigo la clave?</button><button class="btn ghost" data-a="config">Configurar</button>':''}${inv.pendiente&&IA.clave?'<button class="btn" data-a="reintentar">Reintentar</button>':''}</div></div>`:'');
+  if(bajar){const u=$('chat').lastElementChild;if(u)u.scrollIntoView({behavior:'smooth',block:'start'})}
+}
+
+function hojaAyuda(){
+  abrir(`<h2>Cómo conseguir tu clave gratis</h2>
+  <ol class="steps">
+    <li>Pulsa <b>Abrir Google AI Studio</b> e inicia sesión con tu cuenta de Google.</li>
+    <li>Acepta las condiciones si te las pide y pulsa <b>Create API key</b> (Crear clave de API). Si te pide un proyecto, deja que cree uno nuevo.</li>
+    <li>Copia la clave. Empieza por <b>AIza</b> o por <b>AQ.</b>; las dos valen.</li>
+    <li>Vuelve aquí, pulsa <b>Pegar mi clave</b>, pégala y deja el modelo como está (<b>${MODELO_DEF}</b>). Pulsa Guardar.</li>
+    <li>Pulsa <b>Analizar el mercado ahora</b>. La respuesta tarda alrededor de un minuto.</li>
+  </ol>
+  <a class="btn linkbtn" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Abrir Google AI Studio</a>
+  <h3>Bueno saber</h3>
+  <ul class="notas muted">
+    <li>Es gratis, con un límite de consultas al día que pone Google. Si un modelo está saturado, la app prueba sola con otro.</li>
+    <li>Los datos de mercado (cripto, oro, tipos del BCE, inflación y noticias) los descarga la propia página de fuentes gratuitas y se los pasa a Gemini.</li>
+    <li>La clave se guarda solo en este dispositivo y solo se envía a Google.</li>
+    <li>Trátala como una contraseña: no la compartas ni la publiques (por ejemplo, en GitHub). Si se filtra, bórrala en AI Studio y crea otra.</li>
+    <li>En el nivel gratuito Google puede usar tus preguntas para mejorar sus productos; con cada pregunta se envía un resumen de tus ingresos, gastos y ahorro.</li>
+  </ul>
+  <div class="acts"><span class="sp"></span><button class="btn ghost" data-a="cerrar">Cerrar</button><button class="btn" data-a="config">Pegar mi clave</button></div>`);
+}
+
+function hojaConfig(){
+  abrir(`<h2>Asesor de inversión</h2>
+  <p class="muted">Usa Gemini, gratis con tu propia clave. Los datos de mercado los descarga la página.</p>
+  <label for="iaClave">Clave de Gemini</label><input class="f" id="iaClave" type="password" autocomplete="off" value="${esc(IA.clave)}">
+  <label for="iaModelo">Modelo</label><input class="f" id="iaModelo" autocomplete="off" value="${esc(IA.modelo)}" placeholder="${MODELO_DEF}">
+  <p class="muted">Deja el modelo vacío para usar ${MODELO_DEF}. La clave se guarda solo en este dispositivo.</p>
+  <button class="btn ghost" data-a="ayuda">¿Cómo consigo mi clave gratis?</button>
+  <div class="acts">${IA.clave?'<button class="btn danger" data-a="quitarClave">Quitar clave</button>':''}<span class="sp"></span><button class="btn ghost" data-a="cerrar">Cancelar</button><button class="btn" data-a="guardarIA">Guardar</button></div>`);
+}
+
+const ACC={
+  ayuda:hojaAyuda,
+  config:hojaConfig,
+  cerrar:()=>cerrar(),
+  guardarIA:()=>{IA={clave:$('iaClave').value.trim(),modelo:$('iaModelo').value.trim()||MODELO_DEF};saveIA();
+    if(IA.clave&&inv.error&&!inv.cargando)inv.error=null;cerrar();renderInversion();toast(IA.clave?'Clave guardada':'Sin clave',false)},
+  quitarClave:()=>{IA.clave='';saveIA();cerrar();renderInversion();toast('Clave eliminada de este dispositivo',false)},
+  analizar,
+  enviar:()=>{const t=$('pregunta').value;if(t.trim()&&!inv.cargando){$('pregunta').value='';preguntar(t)}},
+  reintentar:()=>{const p=inv.pendiente;if(p)preguntar(p)},
+  nueva:()=>{CH=[];inv.error=null;inv.pendiente=null;saveChat();renderInversion()}
+};
+
+function render(){renderResumen();renderListas();renderInversion()}
 
 function ir(v){
   vista=v;
   document.querySelectorAll('.vista').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  $('fab').classList.toggle('on',v!=='resumen');
+  $('fab').classList.toggle('on',v!=='resumen'&&v!=='inversion');
+  $('askbar').classList.toggle('on',v==='inversion');
   window.scrollTo(0,0);
 }
 
@@ -320,6 +654,10 @@ function pedirReset(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
   const ds=t.dataset;
+  if(ds.a&&ACC[ds.a]){ACC[ds.a]();return}
+  if(ds.mod){inv.mod=ds.mod;renderInversion();return}
+  if(ds.per){inv.per=ds.per;renderInversion();return}
+  if(ds.pla){inv.pla=ds.pla;renderInversion();return}
   if(ds.p){periodo=ds.p;renderResumen();return}
   if(ds.v){ir(ds.v);return}
   if(ds.c){const c=S.conceptos.find(x=>String(x.id)===ds.c);if(c)formConcepto(c,c.tipo==='INGRESO'?['INGRESO']:['GASTO_FIJO','GASTO_VARIABLE']);return}
